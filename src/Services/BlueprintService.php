@@ -157,37 +157,35 @@ class BlueprintService
 
     /**
      * Detect all blueprint containers for a corporation
+     * Now supports nested containers (e.g., CorpSAG > Container > Blueprints)
      *
      * @param int $corporationId
      * @return Collection
      */
     public function detectBlueprintContainers(int $corporationId): Collection
     {
-        // Get all named containers
-        $containers = CorporationAsset::where('corporation_id', $corporationId)
-            ->whereNotNull('name')
-            ->where('name', '!=', '')
-            ->select('name')
-            ->distinct()
-            ->get();
-
-        // Get all blueprints
+        // Get all blueprints and their direct container locations
         $blueprintLocations = CorporationBlueprint::where('corporation_id', $corporationId)
             ->pluck('location_id')
             ->unique();
 
-        // Filter containers that contain blueprints
-        $blueprintContainerIds = CorporationAsset::where('corporation_id', $corporationId)
+        // Find all assets (containers) that directly contain blueprints
+        $directContainerIds = CorporationAsset::where('corporation_id', $corporationId)
             ->whereIn('item_id', $blueprintLocations)
+            ->whereNotNull('name')
+            ->where('name', '!=', '')
             ->pluck('item_id');
 
-        return $containers->filter(function ($container) use ($corporationId, $blueprintContainerIds) {
-            $asset = CorporationAsset::where('corporation_id', $corporationId)
-                ->where('name', $container->name)
-                ->first();
+        // Get the names of these containers
+        $containerNames = CorporationAsset::where('corporation_id', $corporationId)
+            ->whereIn('item_id', $directContainerIds)
+            ->pluck('name')
+            ->unique()
+            ->filter()
+            ->sort()
+            ->values();
 
-            return $asset && $blueprintContainerIds->contains($asset->item_id);
-        })->pluck('name')->unique()->sort()->values();
+        return $containerNames;
     }
 
     /**
