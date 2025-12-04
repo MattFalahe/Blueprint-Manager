@@ -24,11 +24,25 @@ return [
                 'permission' => 'blueprint-manager.request',
             ],
             [
+                'name'  => 'Statistics',
+                'label' => 'blueprint-manager::menu.statistics',
+                'icon'  => 'fas fa-chart-line',
+                'route' => 'blueprint-manager.statistics',
+                'permission' => 'blueprint-manager.manage_requests',
+            ],
+            [
                 'name'  => 'Settings',
                 'label' => 'blueprint-manager::menu.settings',
                 'icon'  => 'fas fa-cog',
                 'route' => 'blueprint-manager.settings',
                 'permission' => 'blueprint-manager.settings',
+            ],
+            [
+                'name'  => 'Help & Documentation',
+                'label' => 'blueprint-manager::menu.help',
+                'icon'  => 'fas fa-question-circle',
+                'route' => 'blueprint-manager.help',
+                'permission' => 'blueprint-manager.view',
             ],
         ]
     ]

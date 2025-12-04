@@ -4,12 +4,12 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
+class CreateBlueprintRequestsTable extends Migration
 {
     /**
      * Run the migrations.
      */
-    public function up(): void
+    public function up()
     {
         Schema::create('blueprint_requests', function (Blueprint $table) {
             $table->id();
@@ -23,6 +23,8 @@ return new class extends Migration
             $table->text('response_notes')->nullable(); // Manager response
             $table->bigInteger('approved_by')->nullable(); // character_id of approver
             $table->timestamp('approved_at')->nullable();
+            $table->bigInteger('rejected_by')->nullable(); // character_id of rejector
+            $table->timestamp('rejected_at')->nullable();
             $table->bigInteger('fulfilled_by')->nullable(); // character_id of fulfiller
             $table->timestamp('fulfilled_at')->nullable();
             $table->timestamps();
@@ -35,8 +37,8 @@ return new class extends Migration
     /**
      * Reverse the migrations.
      */
-    public function down(): void
+    public function down()
     {
         Schema::dropIfExists('blueprint_requests');
     }
-};
+}

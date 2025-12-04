@@ -4,172 +4,13 @@
 @section('page_header', trans('blueprint-manager::common.blueprint_library'))
 
 @push('head')
-<style>
-    /* Dark theme compatible styles */
-    .library-filters {
-        background: rgba(0, 0, 0, 0.2);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 0.25rem;
-        padding: 1.5rem;
-        margin-bottom: 1.5rem;
-    }
-    
-    .filter-row {
-        display: flex;
-        gap: 1rem;
-        align-items: flex-end;
-    }
-    
-    .filter-item {
-        flex: 1;
-        min-width: 200px;
-    }
-    
-    /* Blueprint type badges */
-    .badge-bpo {
-        background-color: rgba(23, 162, 184, 0.2);
-        color: #5dade2;
-        border: 1px solid rgba(23, 162, 184, 0.3);
-    }
-    
-    .badge-bpc {
-        background-color: rgba(255, 193, 7, 0.2);
-        color: #ffd43b;
-        border: 1px solid rgba(255, 193, 7, 0.3);
-    }
-    
-    /* Statistics styling */
-    .stats-group {
-        display: flex;
-        gap: 0.5rem;
-        font-size: 0.875rem;
-        flex-wrap: wrap;
-    }
-    
-    .stat-badge {
-        padding: 0.25rem 0.5rem;
-        background: rgba(0, 0, 0, 0.2);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 0.25rem;
-        white-space: nowrap;
-    }
-    
-    .stat-badge i {
-        margin-right: 0.25rem;
-        opacity: 0.7;
-    }
-    
-    /* Research indicators */
-    .research-indicator {
-        display: inline-block;
-        padding: 0.15rem 0.4rem;
-        font-size: 0.75rem;
-        border-radius: 0.25rem;
-        margin-left: 0.25rem;
-        background-color: rgba(40, 167, 69, 0.2);
-        color: #51cf66;
-        border: 1px solid rgba(40, 167, 69, 0.3);
-    }
-    
-    .research-indicator i {
-        margin-right: 0.25rem;
-    }
-    
-    /* Category badge */
-    .category-badge {
-        font-size: 0.75rem;
-        padding: 0.25rem 0.5rem;
-        border-radius: 0.25rem;
-        background: rgba(108, 117, 125, 0.2);
-        border: 1px solid rgba(108, 117, 125, 0.3);
-        color: #adb5bd;
-    }
-    
-    /* Info banner */
-    .info-banner {
-        background: rgba(23, 162, 184, 0.1);
-        border-left: 4px solid #17a2b8;
-        padding: 0.75rem;
-        margin-bottom: 1rem;
-        border-radius: 0.25rem;
-    }
-    
-    .warning-banner {
-        background: rgba(255, 193, 7, 0.1);
-        border-left: 4px solid #ffc107;
-        padding: 0.75rem;
-        margin-bottom: 1rem;
-        border-radius: 0.25rem;
-    }
-    
-    /* Details modal styling */
-    .location-group {
-        background: rgba(0, 0, 0, 0.2);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 0.25rem;
-        padding: 1rem;
-        margin-bottom: 1rem;
-    }
-    
-    .location-header {
-        font-weight: 600;
-        margin-bottom: 0.5rem;
-        padding-bottom: 0.5rem;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    }
-    
-    .blueprint-item {
-        padding: 0.5rem;
-        background: rgba(0, 0, 0, 0.15);
-        border-radius: 0.25rem;
-        margin-bottom: 0.5rem;
-    }
-    
-    .blueprint-item:last-child {
-        margin-bottom: 0;
-    }
-    
-    /* Progress bar for research */
-    .research-progress {
-        height: 20px;
-        margin-top: 0.25rem;
-        background: rgba(0, 0, 0, 0.3);
-        border-radius: 0.25rem;
-        overflow: hidden;
-    }
-    
-    .research-progress-bar {
-        height: 100%;
-        background: linear-gradient(90deg, #28a745 0%, #51cf66 100%);
-        transition: width 0.3s ease;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 0.75rem;
-        font-weight: 600;
-    }
-    
-    /* Quantity badge */
-    .quantity-badge {
-        background: rgba(108, 117, 125, 0.2);
-        padding: 0.25rem 0.5rem;
-        border-radius: 0.25rem;
-        font-size: 0.875rem;
-        font-weight: 600;
-    }
-    
-    /* Clickable row */
-    .clickable-row {
-        cursor: pointer;
-    }
-    
-    .clickable-row:hover {
-        background: rgba(255, 255, 255, 0.05) !important;
-    }
-</style>
+<link rel="stylesheet" href="{{ asset('vendor/blueprint-manager/css/blueprint-manager.css') }}">
 @endpush
 
+
+
 @section('full')
+<div class="blueprint-manager-wrapper">
 
 <div class="container-fluid">
     <div class="row">
@@ -281,6 +122,7 @@
     </div>
 </div>
 
+</div>
 @endsection
 
 @push('javascript')

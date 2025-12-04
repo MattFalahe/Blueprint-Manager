@@ -22,6 +22,8 @@ class BlueprintRequest extends Model
         'response_notes',
         'approved_by',
         'approved_at',
+        'rejected_by',
+        'rejected_at',
         'fulfilled_by',
         'fulfilled_at',
     ];
@@ -33,8 +35,10 @@ class BlueprintRequest extends Model
         'quantity' => 'integer',
         'runs' => 'integer',
         'approved_by' => 'integer',
+        'rejected_by' => 'integer',
         'fulfilled_by' => 'integer',
         'approved_at' => 'datetime',
+        'rejected_at' => 'datetime',
         'fulfilled_at' => 'datetime',
     ];
 
@@ -60,6 +64,14 @@ class BlueprintRequest extends Model
     public function approver()
     {
         return $this->belongsTo(CharacterInfo::class, 'approved_by', 'character_id');
+    }
+
+    /**
+     * Character who rejected the request
+     */
+    public function rejector()
+    {
+        return $this->belongsTo(CharacterInfo::class, 'rejected_by', 'character_id');
     }
 
     /**
@@ -143,11 +155,11 @@ class BlueprintRequest extends Model
     /**
      * Reject the request
      */
-    public function reject(int $approverId, ?string $notes = null)
+    public function reject(int $rejectorId, ?string $notes = null)
     {
         $this->status = 'rejected';
-        $this->approved_by = $approverId;
-        $this->approved_at = now();
+        $this->rejected_by = $rejectorId;
+        $this->rejected_at = now();
         if ($notes) {
             $this->response_notes = $notes;
         }

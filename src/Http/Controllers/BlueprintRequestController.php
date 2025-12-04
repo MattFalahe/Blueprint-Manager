@@ -7,14 +7,17 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use BlueprintManager\Models\BlueprintRequest as BlueprintRequestModel;
 use BlueprintManager\Services\BlueprintService;
+use BlueprintManager\Services\DiscordNotificationService;
 
 class BlueprintRequestController extends Controller
 {
     protected $blueprintService;
+    protected $notificationService;
 
-    public function __construct(BlueprintService $blueprintService)
+    public function __construct(BlueprintService $blueprintService, DiscordNotificationService $notificationService)
     {
         $this->blueprintService = $blueprintService;
+        $this->notificationService = $notificationService;
     }
 
     /**
@@ -124,6 +127,9 @@ class BlueprintRequestController extends Controller
                 'notes' => $validated['notes'],
                 'status' => 'pending',
             ]);
+
+            // Send Discord notification
+            $this->notificationService->notifyRequestCreated($blueprintRequest);
 
             return response()->json([
                 'success' => true,
@@ -257,6 +263,18 @@ class BlueprintRequestController extends Controller
             // Approve request
             $blueprintRequest->approve($characterId, $request->input('notes'));
 
+            // Get approver name for notification
+            $approverName = DB::table('character_infos')
+                ->where('character_id', $characterId)
+                ->value('name');
+
+            // Send Discord notification
+            $this->notificationService->notifyRequestApproved(
+                $blueprintRequest,
+                $approverName ?? 'Unknown',
+                $request->input('notes')
+            );
+
             return response()->json([
                 'success' => true,
                 'message' => 'Request approved successfully.'
@@ -308,6 +326,18 @@ class BlueprintRequestController extends Controller
 
             // Reject request
             $blueprintRequest->reject($characterId, $request->input('notes'));
+
+            // Get rejector name for notification
+            $rejectorName = DB::table('character_infos')
+                ->where('character_id', $characterId)
+                ->value('name');
+
+            // Send Discord notification
+            $this->notificationService->notifyRequestRejected(
+                $blueprintRequest,
+                $rejectorName ?? 'Unknown',
+                $request->input('notes')
+            );
 
             return response()->json([
                 'success' => true,
@@ -362,6 +392,18 @@ class BlueprintRequestController extends Controller
             // Fulfill request
             $blueprintRequest->fulfill($characterId, $request->input('notes'));
 
+            // Get fulfiller name for notification
+            $fulfillerName = DB::table('character_infos')
+                ->where('character_id', $characterId)
+                ->value('name');
+
+            // Send Discord notification
+            $this->notificationService->notifyRequestFulfilled(
+                $blueprintRequest,
+                $fulfillerName ?? 'Unknown',
+                $request->input('notes')
+            );
+
             return response()->json([
                 'success' => true,
                 'message' => 'Request marked as fulfilled.'
@@ -371,6 +413,55 @@ class BlueprintRequestController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to fulfill request: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Delete a request (user can delete their own pending requests)
+     */
+    public function destroy(BlueprintRequestModel $blueprintRequest)
+    {
+        try {
+            // Get user's character ID
+            $characterId = $this->getUserCharacterId();
+            if (!$characterId) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No character found'
+                ], 400);
+            }
+
+            // Check if user owns this request or has manage permission
+            $canManage = auth()->user()->can('blueprint-manager.manage_requests');
+            $isOwner = $blueprintRequest->character_id == $characterId;
+
+            if (!$canManage && !$isOwner) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Access denied - you can only delete your own requests'
+                ], 403);
+            }
+
+            // Only allow deleting pending or rejected requests
+            if (!in_array($blueprintRequest->status, ['pending', 'rejected'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Only pending or rejected requests can be deleted'
+                ], 400);
+            }
+
+            $blueprintRequest->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Request deleted successfully.'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete request: ' . $e->getMessage()
             ], 500);
         }
     }
@@ -415,4 +506,5 @@ class BlueprintRequestController extends Controller
             ], 500);
         }
     }
+
 }
