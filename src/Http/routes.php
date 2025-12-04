@@ -57,6 +57,13 @@ Route::group([
         'middleware' => 'can:blueprint-manager.request',
     ]);
 
+    // Delete request (users can delete their own pending/rejected requests)
+    Route::delete('/requests/{blueprintRequest}', [
+        'as' => 'blueprint-manager.requests.delete',
+        'uses' => 'BlueprintRequestController@destroy',
+        'middleware' => 'can:blueprint-manager.request',
+    ]);
+
     // Request Management Routes (for managers)
     Route::post('/requests/{blueprintRequest}/approve', [
         'as' => 'blueprint-manager.requests.approve',
@@ -73,6 +80,49 @@ Route::group([
     Route::post('/requests/{blueprintRequest}/fulfill', [
         'as' => 'blueprint-manager.requests.fulfill',
         'uses' => 'BlueprintRequestController@fulfill',
+        'middleware' => 'can:blueprint-manager.manage_requests',
+    ]);
+
+    // Statistics Routes
+    Route::get('/statistics', [
+        'as' => 'blueprint-manager.statistics',
+        'uses' => 'BlueprintStatisticsController@index',
+        'middleware' => 'can:blueprint-manager.manage_requests',
+    ]);
+    
+    Route::get('/statistics/overall', [
+        'as' => 'blueprint-manager.statistics.overall',
+        'uses' => 'BlueprintStatisticsController@getOverallStats',
+        'middleware' => 'can:blueprint-manager.manage_requests',
+    ]);
+    
+    Route::get('/statistics/characters', [
+        'as' => 'blueprint-manager.statistics.characters',
+        'uses' => 'BlueprintStatisticsController@getCharacterStats',
+        'middleware' => 'can:blueprint-manager.manage_requests',
+    ]);
+    
+    Route::get('/statistics/blueprints', [
+        'as' => 'blueprint-manager.statistics.blueprints',
+        'uses' => 'BlueprintStatisticsController@getBlueprintStats',
+        'middleware' => 'can:blueprint-manager.manage_requests',
+    ]);
+    
+    Route::get('/statistics/character/{characterId}', [
+        'as' => 'blueprint-manager.statistics.character-details',
+        'uses' => 'BlueprintStatisticsController@getCharacterDetails',
+        'middleware' => 'can:blueprint-manager.manage_requests',
+    ]);
+    
+    Route::get('/statistics/timeseries/{days?}', [
+        'as' => 'blueprint-manager.statistics.timeseries',
+        'uses' => 'BlueprintStatisticsController@getTimeSeriesStats',
+        'middleware' => 'can:blueprint-manager.manage_requests',
+    ]);
+    
+    Route::get('/statistics/corporation/{corporationId}', [
+        'as' => 'blueprint-manager.statistics.corporation',
+        'uses' => 'BlueprintStatisticsController@getCorporationStats',
         'middleware' => 'can:blueprint-manager.manage_requests',
     ]);
 
@@ -105,5 +155,56 @@ Route::group([
         'as' => 'blueprint-manager.settings.detect',
         'uses' => 'BlueprintSettingsController@detectContainers',
         'middleware' => 'can:blueprint-manager.settings',
+    ]);
+
+    // Detection Settings Routes
+    Route::get('/settings/detection-settings/{corporationId}', [
+        'uses' => 'BlueprintSettingsController@getDetectionSettings',
+        'as' => 'blueprint-manager.settings.detection-settings',
+        'middleware' => ['web', 'auth'],
+    ]);
+    
+    Route::post('/settings/detection-settings/{corporationId}', [
+        'uses' => 'BlueprintSettingsController@saveDetectionSettings',
+        'as' => 'blueprint-manager.settings.save-detection-settings',
+        'middleware' => ['web', 'auth'],
+    ]);
+
+    // Webhook Configuration Routes
+    Route::get('/settings/webhooks', [
+        'as' => 'blueprint-manager.settings.webhooks',
+        'uses' => 'BlueprintSettingsController@getWebhookConfigs',
+        'middleware' => 'can:blueprint-manager.settings',
+    ]);
+
+    Route::post('/settings/webhooks', [
+        'as' => 'blueprint-manager.settings.webhooks.store',
+        'uses' => 'BlueprintSettingsController@storeWebhookConfig',
+        'middleware' => 'can:blueprint-manager.settings',
+    ]);
+
+    Route::put('/settings/webhooks/{id}', [
+        'as' => 'blueprint-manager.settings.webhooks.update',
+        'uses' => 'BlueprintSettingsController@updateWebhookConfig',
+        'middleware' => 'can:blueprint-manager.settings',
+    ]);
+
+    Route::delete('/settings/webhooks/{id}', [
+        'as' => 'blueprint-manager.settings.webhooks.delete',
+        'uses' => 'BlueprintSettingsController@deleteWebhookConfig',
+        'middleware' => 'can:blueprint-manager.settings',
+    ]);
+
+    Route::post('/settings/webhooks/test', [
+        'as' => 'blueprint-manager.settings.webhooks.test',
+        'uses' => 'BlueprintSettingsController@testWebhook',
+        'middleware' => 'can:blueprint-manager.settings',
+    ]);
+
+    // Help & Documentation Route
+    Route::get('/help', [
+        'as' => 'blueprint-manager.help',
+        'uses' => 'BlueprintHelpController@index',
+        'middleware' => 'can:blueprint-manager.view',
     ]);
 });

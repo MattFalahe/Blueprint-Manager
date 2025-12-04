@@ -4,143 +4,16 @@
 @section('page_header', trans('blueprint-manager::common.requests'))
 
 @push('head')
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
-
-<style>
-    /* Dark theme compatible styles */
-    .nav-tabs {
-        border-bottom: 2px solid rgba(255, 255, 255, 0.1);
-        margin-bottom: 1.5rem;
-    }
-    
-    .nav-tabs .nav-link {
-        color: #adb5bd;
-        border: none;
-        border-bottom: 2px solid transparent;
-    }
-    
-    .nav-tabs .nav-link.active {
-        color: #17a2b8;
-        background: transparent;
-        border-bottom: 2px solid #17a2b8;
-    }
-    
-    .nav-tabs .nav-link:hover {
-        border-color: transparent transparent rgba(23, 162, 184, 0.5);
-    }
-    
-    /* Status badges */
-    .status-badge {
-        padding: 0.25rem 0.5rem;
-        border-radius: 0.25rem;
-        font-size: 0.875rem;
-        font-weight: 600;
-    }
-    
-    .status-pending {
-        background-color: rgba(255, 193, 7, 0.2);
-        color: #ffd43b;
-        border: 1px solid rgba(255, 193, 7, 0.3);
-    }
-    
-    .status-approved {
-        background-color: rgba(23, 162, 184, 0.2);
-        color: #5dade2;
-        border: 1px solid rgba(23, 162, 184, 0.3);
-    }
-    
-    .status-fulfilled {
-        background-color: rgba(40, 167, 69, 0.2);
-        color: #51cf66;
-        border: 1px solid rgba(40, 167, 69, 0.3);
-    }
-    
-    .status-rejected {
-        background-color: rgba(220, 53, 69, 0.2);
-        color: #ff6b6b;
-        border: 1px solid rgba(220, 53, 69, 0.3);
-    }
-    
-    /* Info banner */
-    .info-banner {
-        background: rgba(23, 162, 184, 0.1);
-        border-left: 4px solid #17a2b8;
-        padding: 0.75rem;
-        margin-bottom: 1rem;
-        border-radius: 0.25rem;
-    }
-    
-    .warning-banner {
-        background: rgba(255, 193, 7, 0.1);
-        border-left: 4px solid #ffc107;
-        padding: 0.75rem;
-        margin-bottom: 1rem;
-        border-radius: 0.25rem;
-    }
-    
-    /* Request details */
-    .request-details {
-        background: rgba(0, 0, 0, 0.2);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 0.25rem;
-        padding: 1rem;
-        margin-bottom: 1rem;
-    }
-    
-    .detail-row {
-        display: flex;
-        padding: 0.5rem 0;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    }
-    
-    .detail-row:last-child {
-        border-bottom: none;
-    }
-    
-    .detail-label {
-        font-weight: 600;
-        color: #adb5bd;
-        width: 150px;
-        flex-shrink: 0;
-    }
-    
-    .detail-value {
-        flex: 1;
-    }
-    
-    /* Filters */
-    .filter-section {
-        background: rgba(0, 0, 0, 0.2);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 0.25rem;
-        padding: 1rem;
-        margin-bottom: 1rem;
-    }
-    
-    /* Select2 dark theme */
-    .select2-container--bootstrap-5 .select2-selection {
-        background-color: #1a1d20;
-        border-color: rgba(255, 255, 255, 0.1);
-        color: #fff;
-    }
-    
-    .select2-container--bootstrap-5 .select2-dropdown {
-        background-color: #1a1d20;
-        border-color: rgba(255, 255, 255, 0.1);
-    }
-    
-    .select2-container--bootstrap-5 .select2-results__option {
-        color: #fff;
-    }
-    
-    .select2-container--bootstrap-5 .select2-results__option--highlighted {
-        background-color: #17a2b8;
-    }
-</style>
+<link rel="stylesheet" href="{{ asset('vendor/blueprint-manager/css/blueprint-manager.css') }}">
 @endpush
 
+
+
 @section('full')
+<div class="blueprint-manager-wrapper">
+
+<!-- Dedicated Alert Container -->
+<div id="alertContainer" style="position: fixed; top: 60px; right: 20px; z-index: 9999; width: 400px; max-width: 90vw;"></div>
 
 <div class="container-fluid">
     <div class="row">
@@ -446,10 +319,41 @@
     </div>
 </div>
 
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Delete Request</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="deleteForm">
+                @csrf
+                <input type="hidden" id="delete_request_id">
+                <div class="modal-body">
+                    <div class="warning-banner">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>Warning:</strong> This action cannot be undone.
+                    </div>
+                    <p>Are you sure you want to delete this request?</p>
+                    <p><strong>Blueprint:</strong> <span id="delete_blueprint_name"></span></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ trans('blueprint-manager::common.cancel') }}</button>
+                    <button type="submit" class="btn btn-danger">Delete Request</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+</div>
 @endsection
 
 @push('javascript')
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="{{ asset('vendor/blueprint-manager/js/select2.min.js') }}"></script>
 <script>
 $(document).ready(function() {
     let myRequestsTable;
@@ -486,7 +390,16 @@ $(document).ready(function() {
             {
                 targets: 6, // Actions
                 render: function(data, type, row) {
-                    return '<button class="btn btn-sm btn-info btn-view-details" data-request-id="' + row.id + '"><i class="fas fa-eye"></i></button>';
+                    let html = '<div class="btn-group btn-group-sm">';
+                    html += '<button class="btn btn-info btn-view-details" data-request-id="' + row.id + '"><i class="fas fa-eye"></i></button>';
+                    
+                    // Allow deleting own pending or rejected requests
+                    if (row.is_own && (row.status === 'pending' || row.status === 'rejected')) {
+                        html += '<button class="btn btn-danger btn-delete" data-request-id="' + row.id + '" data-blueprint-name="' + row.blueprint_name + '"><i class="fas fa-trash"></i></button>';
+                    }
+                    
+                    html += '</div>';
+                    return html;
                 }
             }
         ]
@@ -531,8 +444,11 @@ $(document).ready(function() {
                     if (row.status === 'pending') {
                         html += '<button class="btn btn-success btn-approve" data-request-id="' + row.id + '" data-blueprint-name="' + row.blueprint_name + '" data-quantity="' + row.quantity + '"><i class="fas fa-check"></i></button>';
                         html += '<button class="btn btn-danger btn-reject" data-request-id="' + row.id + '" data-blueprint-name="' + row.blueprint_name + '"><i class="fas fa-times"></i></button>';
+                        html += '<button class="btn btn-danger btn-delete" data-request-id="' + row.id + '" data-blueprint-name="' + row.blueprint_name + '"><i class="fas fa-trash"></i></button>';
                     } else if (row.status === 'approved') {
                         html += '<button class="btn btn-success btn-fulfill" data-request-id="' + row.id + '" data-blueprint-name="' + row.blueprint_name + '" data-quantity="' + row.quantity + '"><i class="fas fa-check-double"></i></button>';
+                    } else if (row.status === 'rejected') {
+                        html += '<button class="btn btn-danger btn-delete" data-request-id="' + row.id + '" data-blueprint-name="' + row.blueprint_name + '"><i class="fas fa-trash"></i></button>';
                     }
                     
                     html += '</div>';
@@ -789,14 +705,18 @@ $(document).ready(function() {
         const requestId = $('#approve_request_id').val();
         const notes = $('#approve_notes').val();
         
+        // Debug logging
+        console.log('Approving request ID:', requestId);
+        
         $.ajax({
-            url: '{{ route('blueprint-manager.requests.approve', '') }}/' + requestId,
+            url: '{{ route('blueprint-manager.requests.approve', ':id') }}'.replace(':id', requestId),
             method: 'POST',
             data: {
                 notes: notes,
                 _token: '{{ csrf_token() }}'
             },
             success: function(response) {
+                console.log('Approve response:', response);
                 if (response.success) {
                     showAlert('success', response.message);
                     $('#approveModal').modal('hide');
@@ -806,8 +726,10 @@ $(document).ready(function() {
                 }
             },
             error: function(xhr) {
-                const errorMsg = xhr.responseJSON?.message || 'Failed to approve request';
-                showAlert('danger', errorMsg);
+                console.error('Approve error:', xhr);
+                console.error('Response:', xhr.responseJSON);
+                const errorMsg = xhr.responseJSON?.message || xhr.statusText || 'Failed to approve request';
+                showAlert('danger', 'Failed to approve: ' + errorMsg);
             }
         });
     });
@@ -830,19 +752,23 @@ $(document).ready(function() {
         const requestId = $('#reject_request_id').val();
         const notes = $('#reject_notes').val();
         
-        if (!notes) {
+        if (!notes || notes.trim() === '') {
             showAlert('warning', 'Please provide a reason for rejection');
             return;
         }
         
+        // Debug logging
+        console.log('Rejecting request ID:', requestId);
+        
         $.ajax({
-            url: '{{ route('blueprint-manager.requests.reject', '') }}/' + requestId,
+            url: '{{ route('blueprint-manager.requests.reject', ':id') }}'.replace(':id', requestId),
             method: 'POST',
             data: {
                 notes: notes,
                 _token: '{{ csrf_token() }}'
             },
             success: function(response) {
+                console.log('Reject response:', response);
                 if (response.success) {
                     showAlert('success', response.message);
                     $('#rejectModal').modal('hide');
@@ -852,8 +778,10 @@ $(document).ready(function() {
                 }
             },
             error: function(xhr) {
-                const errorMsg = xhr.responseJSON?.message || 'Failed to reject request';
-                showAlert('danger', errorMsg);
+                console.error('Reject error:', xhr);
+                console.error('Response:', xhr.responseJSON);
+                const errorMsg = xhr.responseJSON?.message || xhr.statusText || 'Failed to reject request';
+                showAlert('danger', 'Failed to reject: ' + errorMsg);
             }
         });
     });
@@ -878,14 +806,18 @@ $(document).ready(function() {
         const requestId = $('#fulfill_request_id').val();
         const notes = $('#fulfill_notes').val();
         
+        // Debug logging
+        console.log('Fulfilling request ID:', requestId);
+        
         $.ajax({
-            url: '{{ route('blueprint-manager.requests.fulfill', '') }}/' + requestId,
+            url: '{{ route('blueprint-manager.requests.fulfill', ':id') }}'.replace(':id', requestId),
             method: 'POST',
             data: {
                 notes: notes,
                 _token: '{{ csrf_token() }}'
             },
             success: function(response) {
+                console.log('Fulfill response:', response);
                 if (response.success) {
                     showAlert('success', response.message);
                     $('#fulfillModal').modal('hide');
@@ -895,23 +827,76 @@ $(document).ready(function() {
                 }
             },
             error: function(xhr) {
-                const errorMsg = xhr.responseJSON?.message || 'Failed to fulfill request';
+                console.error('Fulfill error:', xhr);
+                console.error('Response:', xhr.responseJSON);
+                const errorMsg = xhr.responseJSON?.message || xhr.statusText || 'Failed to fulfill request';
+                showAlert('danger', 'Failed to fulfill: ' + errorMsg);
+            }
+        });
+    });
+
+    // Delete button click handler
+    $(document).on('click', '.btn-delete', function() {
+        const requestId = $(this).data('request-id');
+        const blueprintName = $(this).data('blueprint-name');
+        
+        $('#delete_request_id').val(requestId);
+        $('#delete_blueprint_name').text(blueprintName);
+        $('#deleteModal').modal('show');
+    });
+
+    // Delete form submit handler
+    $('#deleteForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        const requestId = $('#delete_request_id').val();
+        
+        $.ajax({
+            url: '{{ route('blueprint-manager.requests.delete', '') }}/' + requestId,
+            method: 'DELETE',
+            data: {
+                _token: '{{ csrf_token() }}'
+            },
+            success: function(response) {
+                if (response.success) {
+                    showAlert('success', response.message);
+                    $('#deleteModal').modal('hide');
+                    
+                    // Reload the appropriate table
+                    loadMyRequests($('#myRequestsStatusFilter').val());
+                    @if($canManageRequests)
+                    loadManageRequests($('#manageRequestsStatusFilter').val());
+                    @endif
+                } else {
+                    showAlert('danger', response.message);
+                }
+            },
+            error: function(xhr) {
+                const errorMsg = xhr.responseJSON?.message || 'Failed to delete request';
                 showAlert('danger', errorMsg);
             }
         });
     });
 
-    // Helper function to show alerts
+    // Helper function to show alerts (FIXED - proper wrapping and display)
     function showAlert(type, message) {
+        // Remove any existing alerts
+        $('#alertContainer .alert').remove();
+        
+        const iconMap = {
+            'success': 'check-circle',
+            'danger': 'exclamation-triangle',
+            'warning': 'exclamation-triangle',
+            'info': 'info-circle'
+        };
+        
         const alert = $('<div class="alert alert-' + type + ' alert-dismissible fade show" role="alert">' +
-            '<i class="fas fa-' + (type === 'success' ? 'check-circle' : 'exclamation-triangle') + '"></i> ' +
-            message +
-            '<button type="button" class="close" data-dismiss="alert" aria-label="Close">' +
-            '<span aria-hidden="true">&times;</span>' +
-            '</button>' +
+            '<i class="fas fa-' + (iconMap[type] || 'info-circle') + '"></i>' +
+            '<span>' + message + '</span>' +
+            '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>' +
             '</div>');
         
-        $('.container-fluid').prepend(alert);
+        $('#alertContainer').append(alert);
         
         // Auto-dismiss after 5 seconds
         setTimeout(function() {

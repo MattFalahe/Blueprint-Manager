@@ -6,6 +6,7 @@ use Illuminate\Routing\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use BlueprintManager\Models\BlueprintContainerConfig;
+use BlueprintManager\Models\BlueprintDetectionSettings;
 use BlueprintManager\Services\BlueprintService;
 
 class BlueprintSettingsController extends Controller
@@ -49,7 +50,6 @@ class BlueprintSettingsController extends Controller
         // Get corporation info for these corps
         $corporations = DB::table('corporation_infos')
             ->whereIn('corporation_id', $corporationsWithBlueprints)
-            ->select('corporation_id', 'name')
             ->orderBy('name')
             ->get();
 
@@ -57,109 +57,84 @@ class BlueprintSettingsController extends Controller
     }
 
     /**
-     * Store new container configuration
+     * Store a new container configuration
      */
     public function storeContainerConfig(Request $request)
     {
         try {
-            // Validate input
             $validated = $request->validate([
                 'corporation_id' => 'required|integer',
                 'container_name' => 'required|string|max:255',
+                'match_type' => 'required|in:exact,contains,starts_with,ends_with,regex',
                 'display_category' => 'required|string|max:100',
-                'match_type' => 'required|in:exact,contains,starts_with',
-                'priority' => 'nullable|integer|min:0|max:100',
                 'enabled' => 'boolean',
+                'priority' => 'integer|min:0|max:100',
             ]);
 
-            // Set defaults
-            $validated['priority'] = $validated['priority'] ?? 0;
-            $validated['enabled'] = $request->has('enabled');
-
-            // Check for duplicate
-            $existing = BlueprintContainerConfig::where('corporation_id', $validated['corporation_id'])
+            // Check for duplicates
+            $exists = BlueprintContainerConfig::where('corporation_id', $validated['corporation_id'])
                 ->where('container_name', $validated['container_name'])
                 ->where('match_type', $validated['match_type'])
-                ->first();
+                ->exists();
 
-            if ($existing) {
+            if ($exists) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'A configuration with this container name and match type already exists for this corporation.'
+                    'message' => 'This configuration already exists'
                 ], 422);
             }
 
-            // Create configuration
             $config = BlueprintContainerConfig::create($validated);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Container configuration added successfully.',
+                'message' => 'Configuration created successfully',
                 'config' => $config->load('corporation')
             ]);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Validation failed.',
+                'message' => 'Validation failed',
                 'errors' => $e->errors()
             ], 422);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to add configuration: ' . $e->getMessage()
+                'message' => 'Failed to create configuration: ' . $e->getMessage()
             ], 500);
         }
     }
 
     /**
-     * Update existing container configuration
+     * Update an existing configuration
      */
-    public function updateContainerConfig(Request $request, BlueprintContainerConfig $config)
+    public function updateContainerConfig(Request $request, $id)
     {
         try {
-            // Validate input
+            $config = BlueprintContainerConfig::findOrFail($id);
+
             $validated = $request->validate([
-                'container_name' => 'required|string|max:255',
-                'display_category' => 'required|string|max:100',
-                'match_type' => 'required|in:exact,contains,starts_with',
-                'priority' => 'nullable|integer|min:0|max:100',
+                'container_name' => 'sometimes|string|max:255',
+                'match_type' => 'sometimes|in:exact,contains,starts_with,ends_with,regex',
+                'display_category' => 'sometimes|string|max:100',
                 'enabled' => 'boolean',
+                'priority' => 'integer|min:0|max:100',
             ]);
 
-            // Set defaults
-            $validated['priority'] = $validated['priority'] ?? 0;
-            $validated['enabled'] = $request->has('enabled');
-
-            // Check for duplicate (excluding current config)
-            $existing = BlueprintContainerConfig::where('corporation_id', $config->corporation_id)
-                ->where('container_name', $validated['container_name'])
-                ->where('match_type', $validated['match_type'])
-                ->where('id', '!=', $config->id)
-                ->first();
-
-            if ($existing) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'A configuration with this container name and match type already exists for this corporation.'
-                ], 422);
-            }
-
-            // Update configuration
             $config->update($validated);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Container configuration updated successfully.',
-                'config' => $config->fresh()->load('corporation')
+                'message' => 'Configuration updated successfully',
+                'config' => $config->load('corporation')
             ]);
 
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Validation failed.',
-                'errors' => $e->errors()
-            ], 422);
+                'message' => 'Configuration not found'
+            ], 404);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -169,22 +144,52 @@ class BlueprintSettingsController extends Controller
     }
 
     /**
-     * Delete container configuration
+     * Delete a configuration
      */
-    public function deleteContainerConfig(BlueprintContainerConfig $config)
+    public function deleteContainerConfig($id)
     {
         try {
+            $config = BlueprintContainerConfig::findOrFail($id);
             $config->delete();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Container configuration deleted successfully.'
+                'message' => 'Configuration deleted successfully'
+            ]);
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Configuration not found'
+            ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete configuration: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Toggle configuration enabled status
+     */
+    public function toggleEnabled($id)
+    {
+        try {
+            $config = BlueprintContainerConfig::findOrFail($id);
+            $config->enabled = !$config->enabled;
+            $config->save();
+
+            return response()->json([
+                'success' => true,
+                'enabled' => $config->enabled,
+                'message' => $config->enabled ? 'Configuration enabled' : 'Configuration disabled'
             ]);
 
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to delete configuration: ' . $e->getMessage()
+                'message' => 'Failed to toggle configuration: ' . $e->getMessage()
             ], 500);
         }
     }
@@ -195,7 +200,12 @@ class BlueprintSettingsController extends Controller
     public function detectContainers($corporationId)
     {
         try {
-            $containers = $this->blueprintService->detectBlueprintContainers($corporationId);
+            // Get detection settings for hangar filter
+            $settings = BlueprintDetectionSettings::find($corporationId);
+            $hangarFilter = $settings ? $settings->getEnabledDivisions() : null;
+
+            // Detect containers with hangar filter
+            $containers = $this->blueprintService->detectBlueprintContainers($corporationId, $hangarFilter);
 
             // Get existing configurations for this corp
             $existingConfigs = BlueprintContainerConfig::where('corporation_id', $corporationId)
@@ -203,8 +213,8 @@ class BlueprintSettingsController extends Controller
                 ->toArray();
 
             // Filter out already configured containers
-            $newContainers = $containers->reject(function ($containerName) use ($existingConfigs) {
-                return in_array($containerName, $existingConfigs);
+            $newContainers = $containers->reject(function ($container) use ($existingConfigs) {
+                return in_array($container->container_name, $existingConfigs);
             });
 
             return response()->json([
@@ -237,7 +247,7 @@ class BlueprintSettingsController extends Controller
 
             return response()->json([
                 'success' => true,
-                'configurations' => $configs
+                'configs' => $configs
             ]);
 
         } catch (\Exception $e) {
@@ -247,4 +257,245 @@ class BlueprintSettingsController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Get detection settings for a corporation (AJAX)
+     */
+    public function getDetectionSettings($corporationId)
+    {
+        try {
+            $settings = BlueprintDetectionSettings::getOrCreateDefault($corporationId);
+            $divisionNames = BlueprintDetectionSettings::getAvailableDivisionsWithNames($corporationId);
+
+            return response()->json([
+                'success' => true,
+                'hangar_divisions' => $settings->getEnabledDivisions(),
+                'division_names' => $divisionNames
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load detection settings: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Save detection settings for a corporation (AJAX)
+     */
+    public function saveDetectionSettings(Request $request, $corporationId)
+    {
+        try {
+            $validated = $request->validate([
+                'hangar_divisions' => 'required|array',
+                'hangar_divisions.*' => 'string|in:CorpSAG1,CorpSAG2,CorpSAG3,CorpSAG4,CorpSAG5,CorpSAG6,CorpSAG7,AssetSafety'
+            ]);
+
+            $settings = BlueprintDetectionSettings::updateOrCreate(
+                ['corporation_id' => $corporationId],
+                ['hangar_divisions' => $validated['hangar_divisions']]
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Detection settings saved successfully'
+            ]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to save detection settings: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get webhook configurations
+     */
+    public function getWebhookConfigs()
+    {
+        $configs = \BlueprintManager\Models\WebhookConfig::with('corporation')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'configs' => $configs
+        ]);
+    }
+
+    /**
+     * Store new webhook configuration
+     */
+    public function storeWebhookConfig(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'webhook_url' => 'required|url',
+                'corporation_id' => 'nullable|exists:corporation_infos,corporation_id',
+                'notify_created' => 'required|boolean',
+                'notify_approved' => 'required|boolean',
+                'notify_rejected' => 'required|boolean',
+                'notify_fulfilled' => 'required|boolean',
+                'ping_role_created' => 'nullable|string|max:50',
+                'ping_role_approved' => 'nullable|string|max:50',
+                'ping_role_rejected' => 'nullable|string|max:50',
+                'ping_role_fulfilled' => 'nullable|string|max:50',
+                'enabled' => 'required|boolean',
+            ]);
+    
+            // Remove empty role IDs
+            foreach (['ping_role_created', 'ping_role_approved', 'ping_role_rejected', 'ping_role_fulfilled'] as $field) {
+                if (isset($validated[$field]) && empty(trim($validated[$field]))) {
+                    $validated[$field] = null;
+                }
+            }
+    
+            $config = \BlueprintManager\Models\WebhookConfig::create($validated);
+    
+            return response()->json([
+                'success' => true,
+                'message' => 'Webhook configuration created successfully',
+                'config' => $config->load('corporation')
+            ]);
+    
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create webhook configuration: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+    
+    /**
+     * Update webhook configuration
+     */
+    public function updateWebhookConfig(Request $request, $id)
+    {
+        try {
+            $config = \BlueprintManager\Models\WebhookConfig::findOrFail($id);
+    
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'webhook_url' => 'required|url',
+                'corporation_id' => 'nullable|exists:corporation_infos,corporation_id',
+                'notify_created' => 'required|boolean',
+                'notify_approved' => 'required|boolean',
+                'notify_rejected' => 'required|boolean',
+                'notify_fulfilled' => 'required|boolean',
+                'ping_role_created' => 'nullable|string|max:50',
+                'ping_role_approved' => 'nullable|string|max:50',
+                'ping_role_rejected' => 'nullable|string|max:50',
+                'ping_role_fulfilled' => 'nullable|string|max:50',
+                'enabled' => 'required|boolean',
+            ]);
+    
+            // Remove empty role IDs
+            foreach (['ping_role_created', 'ping_role_approved', 'ping_role_rejected', 'ping_role_fulfilled'] as $field) {
+                if (isset($validated[$field]) && empty(trim($validated[$field]))) {
+                    $validated[$field] = null;
+                }
+            }
+    
+            $config->update($validated);
+    
+            return response()->json([
+                'success' => true,
+                'message' => 'Webhook configuration updated successfully',
+                'config' => $config->load('corporation')
+            ]);
+    
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update webhook configuration: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+
+    /**
+     * Delete webhook configuration
+     */
+    public function deleteWebhookConfig($id)
+    {
+        try {
+            $config = \BlueprintManager\Models\WebhookConfig::findOrFail($id);
+            $config->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Webhook configuration deleted successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete webhook configuration: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Test webhook
+     */
+    public function testWebhook(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'webhook_url' => 'required|url',
+            ]);
+
+            $response = \Illuminate\Support\Facades\Http::timeout(10)->post($validated['webhook_url'], [
+                'embeds' => [[
+                    'title' => '🧪 Blueprint Manager Webhook Test',
+                    'description' => 'This is a test notification from Blueprint Manager. If you see this, your webhook is configured correctly!',
+                    'color' => 3447003,
+                    'timestamp' => now()->toIso8601String(),
+                    'footer' => [
+                        'text' => 'Blueprint Manager'
+                    ]
+                ]]
+            ]);
+
+            if ($response->successful()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Test notification sent successfully!'
+                ]);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Webhook test failed: ' . $response->status() . ' - ' . $response->body()
+                ], 400);
+            }
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Webhook test failed: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }
+

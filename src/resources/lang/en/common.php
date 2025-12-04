@@ -8,6 +8,7 @@ return [
     'blueprint' => 'Blueprint',
     
     // Blueprint types
+    'type' => 'Type',
     'bpo' => 'BPO',
     'bpc' => 'BPC',
     'original' => 'Original',
@@ -46,6 +47,7 @@ return [
     
     // Request status
     'status' => 'Status',
+    'all_status' => 'All Status',
     'pending' => 'Pending',
     'approved' => 'Approved',
     'fulfilled' => 'Fulfilled',
@@ -78,6 +80,7 @@ return [
     'priority' => 'Priority',
     
     // Common actions
+    'actions' => 'Actions',
     'save' => 'Save',
     'delete' => 'Delete',
     'edit' => 'Edit',
@@ -123,4 +126,21 @@ return [
     'requested_by' => 'Requested By',
     'approved_by' => 'Approved By',
     'fulfilled_by' => 'Fulfilled By',
+
+    // Webhooks
+    'webhooks' => 'Discord Webhooks',
+    'webhook_name' => 'Webhook Name',
+    'webhook_url' => 'Webhook URL',
+    'webhook_configuration' => 'Webhook Configuration',
+    'add_webhook' => 'Add Webhook',
+    'edit_webhook' => 'Edit Webhook',
+    'delete_webhook' => 'Delete Webhook',
+    'test_webhook' => 'Test Webhook',
+    'notify_on_created' => 'Notify on Created',
+    'notify_on_approved' => 'Notify on Approved',
+    'notify_on_rejected' => 'Notify on Rejected',
+    'notify_on_fulfilled' => 'Notify on Fulfilled',
+    'all_corporations_webhook' => 'All Corporations',
+    'webhook_description' => 'Configure Discord webhooks to receive notifications when blueprint requests are created, approved, rejected, or fulfilled.',
+    'no_webhooks' => 'No webhook configurations found',
 ];
