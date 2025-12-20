@@ -22,8 +22,7 @@ class ResearchProgressService
         $query = CorporationIndustryJob::where('corporation_id', $corporationId)
             ->whereIn('activity_id', [3, 4, 5]) // Copying, ME Research, TE Research
             ->where('status', 'active')
-            ->where('end_date', '>', now())
-            ->with(['blueprintType']);
+            ->where('end_date', '>', now());
 
         if ($blueprintTypeIds) {
             $query->whereIn('blueprint_type_id', $blueprintTypeIds);
@@ -37,10 +36,13 @@ class ResearchProgressService
                 ->where('item_id', $job->blueprint_id)
                 ->first();
 
+            // Manually load the blueprint type name from InvType
+            $blueprintType = InvType::find($job->blueprint_type_id);
+
             return (object) [
                 'job_id' => $job->job_id,
                 'blueprint_type_id' => $job->blueprint_type_id,
-                'blueprint_name' => $job->blueprintType->typeName ?? 'Unknown',
+                'blueprint_name' => $blueprintType->typeName ?? 'Unknown',
                 'activity_id' => $job->activity_id,
                 'activity_name' => $this->getActivityName($job->activity_id),
                 'job_description' => $this->getJobDescription($job, $blueprint),
