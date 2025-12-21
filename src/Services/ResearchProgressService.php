@@ -21,8 +21,8 @@ class ResearchProgressService
     {
         $query = CorporationIndustryJob::where('corporation_id', $corporationId)
             ->whereIn('activity_id', [3, 4, 5]) // Copying, ME Research, TE Research
-            ->where('status', 'active')
-            ->where('end_date', '>', now());
+            ->where('status', 'active') // Show both running and waiting for delivery
+            ->with(['blueprint']);
 
         if ($blueprintTypeIds) {
             $query->whereIn('blueprint_type_id', $blueprintTypeIds);
@@ -36,21 +36,18 @@ class ResearchProgressService
                 ->where('item_id', $job->blueprint_id)
                 ->first();
 
-            // Manually load the blueprint type name from InvType
-            $blueprintType = InvType::find($job->blueprint_type_id);
-
             return (object) [
                 'job_id' => $job->job_id,
                 'blueprint_type_id' => $job->blueprint_type_id,
-                'blueprint_name' => $blueprintType->typeName ?? 'Unknown',
+                'blueprint_name' => $job->blueprint->typeName ?? 'Unknown',
                 'activity_id' => $job->activity_id,
                 'activity_name' => $this->getActivityName($job->activity_id),
                 'job_description' => $this->getJobDescription($job, $blueprint),
                 'runs' => $job->runs,
                 'start_date' => $job->start_date,
                 'end_date' => $job->end_date,
-                'time_remaining' => $this->getTimeRemaining($job->end_date),
-                'progress_percentage' => $this->getProgressPercentage($job->start_date, $job->end_date),
+                'time_remaining' => $this->getTimeRemaining(Carbon::parse($job->end_date)),
+                'progress_percentage' => $this->getProgressPercentage(Carbon::parse($job->start_date), Carbon::parse($job->end_date)),
                 'current_me' => $blueprint->material_efficiency ?? null,
                 'current_te' => $blueprint->time_efficiency ?? null,
             ];
@@ -117,7 +114,7 @@ class ResearchProgressService
         $now = now();
         
         if ($endDate <= $now) {
-            return 'Completed';
+            return 'Ready for Delivery';
         }
 
         $diff = $now->diff($endDate);
@@ -198,8 +195,7 @@ class ResearchProgressService
         return CorporationIndustryJob::where('corporation_id', $corporationId)
             ->where('blueprint_id', $blueprintItemId)
             ->whereIn('activity_id', [3, 4, 5])
-            ->where('status', 'active')
-            ->where('end_date', '>', now())
+            ->where('status', 'active') // Includes both running and waiting for delivery
             ->exists();
     }
 }

@@ -8,6 +8,7 @@ use BlueprintManager\Models\BlueprintContainerConfig;
 use BlueprintManager\Models\BlueprintDetectionSettings;
 use Seat\Eveapi\Models\Assets\CorporationAsset;
 use Seat\Eveapi\Models\Corporation\CorporationBlueprint;
+use Seat\Eveapi\Models\Industry\CorporationIndustryJob;
 use Seat\Eveapi\Models\Sde\InvType;
 
 class BlueprintService
@@ -18,6 +19,9 @@ class BlueprintService
      * CRITICAL: Blueprints ARE assets! We must join through the asset table.
      * blueprint.item_id = asset.item_id
      * asset.location_id = container.item_id
+     *
+     * NOTE: Blueprints in research don't have asset records, so we fetch them separately
+     * from industry jobs and include them if their original location was a configured container.
      *
      * @param int $corporationId
      * @param string|null $category
@@ -52,10 +56,6 @@ class BlueprintService
             ->whereIn('location_id', $containerIds)
             ->pluck('item_id');
 
-        if ($blueprintItemIds->isEmpty()) {
-            return collect();
-        }
-
         // 2. Get blueprint records WHERE blueprint.item_id = asset.item_id
         $blueprints = CorporationBlueprint::where('corporation_id', $corporationId)
             ->whereIn('item_id', $blueprintItemIds)
@@ -82,6 +82,12 @@ class BlueprintService
             $blueprint->is_bpo = $blueprint->runs === -1;
             return $blueprint;
         });
+
+        // 4. ALSO get blueprints in research that were originally from configured containers
+        $researchBlueprints = $this->getResearchBlueprintsFromContainers($corporationId, $containerMatches);
+        
+        // Merge research blueprints with regular blueprints (convert to base collection to avoid Eloquent merge issues)
+        $blueprints = collect($blueprints->values()->all())->merge($researchBlueprints->values()->all());
 
         // Group by type_id and aggregate
         $grouped = $blueprints->groupBy('type_id')->map(function ($group) {
@@ -142,6 +148,65 @@ class BlueprintService
     }
 
     /**
+     * Get blueprints that are in research but were originally from configured containers
+     *
+     * @param int $corporationId
+     * @param Collection $containerMatches Configured containers with their categories
+     * @return Collection
+     */
+    private function getResearchBlueprintsFromContainers(int $corporationId, Collection $containerMatches): Collection
+    {
+        // Get all active research jobs (ME/TE research, copying)
+        $researchJobs = CorporationIndustryJob::where('corporation_id', $corporationId)
+            ->whereIn('activity_id', [3, 4, 5]) // Copying, ME Research, TE Research
+            ->where('status', 'active')
+            ->get();
+
+        if ($researchJobs->isEmpty()) {
+            return collect();
+        }
+
+        $containerIds = $containerMatches->pluck('item_id');
+        
+        // Filter to only jobs where the blueprint's original location is a configured container
+        $relevantJobs = $researchJobs->filter(function ($job) use ($containerIds) {
+            return $containerIds->contains($job->blueprint_location_id);
+        });
+
+        if ($relevantJobs->isEmpty()) {
+            return collect();
+        }
+
+        // Get blueprint item IDs from jobs
+        $blueprintItemIds = $relevantJobs->pluck('blueprint_id')->unique();
+
+        // Get the actual blueprint records
+        $blueprints = CorporationBlueprint::where('corporation_id', $corporationId)
+            ->whereIn('item_id', $blueprintItemIds)
+            ->with(['type'])
+            ->get();
+
+        // Add container information based on the job's blueprint_location_id
+        return $blueprints->map(function ($blueprint) use ($containerMatches, $relevantJobs) {
+            // Find the job for this blueprint
+            $job = $relevantJobs->firstWhere('blueprint_id', $blueprint->item_id);
+            
+            if ($job) {
+                // Find the container config based on blueprint_location_id
+                $container = $containerMatches->firstWhere('item_id', $job->blueprint_location_id);
+                $blueprint->container_name = $container->container_name ?? 'Unknown';
+                $blueprint->display_category = $container->display_category ?? 'Unknown';
+            } else {
+                $blueprint->container_name = 'Unknown';
+                $blueprint->display_category = 'Unknown';
+            }
+
+            $blueprint->is_bpo = $blueprint->runs === -1;
+            return $blueprint;
+        });
+    }
+
+    /**
      * Get all unique categories configured for a corporation
      *
      * @param int $corporationId
@@ -161,6 +226,7 @@ class BlueprintService
      * Get blueprint details including location information
      *
      * CRITICAL: Blueprints ARE assets! We must join through the asset table.
+     * NOTE: Also includes blueprints in research that were from configured containers.
      *
      * @param int $corporationId
      * @param int $typeId
@@ -183,12 +249,8 @@ class BlueprintService
             ->whereIn('location_id', $containerIds)
             ->pluck('item_id');
 
-        if ($blueprintItemIds->isEmpty()) {
-            return collect();
-        }
-
         // 2. Get blueprint records WHERE blueprint.item_id = asset.item_id AND type matches
-        return CorporationBlueprint::where('corporation_id', $corporationId)
+        $blueprints = CorporationBlueprint::where('corporation_id', $corporationId)
             ->where('type_id', $typeId)
             ->whereIn('item_id', $blueprintItemIds)
             ->with(['type'])
@@ -211,6 +273,13 @@ class BlueprintService
 
                 return $blueprint;
             });
+
+        // 3. ALSO get blueprints of this type that are in research
+        $researchBlueprints = $this->getResearchBlueprintsFromContainers($corporationId, $containerMatches)
+            ->where('type_id', $typeId);
+        
+        // Merge and return (convert to base collection to avoid Eloquent merge issues)
+        return collect($blueprints->values()->all())->merge($researchBlueprints->values()->all());
     }
 
     /**
