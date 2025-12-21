@@ -5,6 +5,26 @@ Each version entry lists key changes for easier reference and upgrade planning.
 
 ---
 
+## Version 1.0.1 — *December 2025*
+
+### Fixed
+- Fixed blueprints disappearing when put into research (ME/TE research, copying jobs)
+- Fixed incorrect relationship name in ResearchProgressService (`blueprintType` → `blueprint`)
+- Fixed date type errors by adding Carbon::parse() for date conversions
+- Fixed collection merge errors in BlueprintService after map() transformations
+
+### Added
+- Research blueprints now appear in library with "In Research" status
+- Only blueprints from configured containers are tracked during research
+- Blueprints remain visible until delivered in-game, not just until timer ends
+
+### Technical Details
+- BlueprintService now queries active industry jobs to include research blueprints
+- Uses `blueprint_location_id` to filter only jobs from configured containers
+- Converts Eloquent Collections to base Collections before merging to avoid key errors
+
+---
+
 ## 🎉 Version 1.0.0 — *December 2025* — Initial Release
 
 ### Overview
