@@ -123,6 +123,7 @@ return [
     'rejected_at' => 'Rejected At',
     
     // Characters
+    'requesting_character' => 'Requesting Character',
     'requested_by' => 'Requested By',
     'approved_by' => 'Approved By',
     'fulfilled_by' => 'Fulfilled By',

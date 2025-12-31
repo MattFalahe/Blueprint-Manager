@@ -47,10 +47,19 @@ class BlueprintRequestController extends Controller
                 ->get();
         }
 
+        // Get user's characters for the character selector
+        $userCharacters = DB::table('refresh_tokens')
+            ->join('character_infos', 'refresh_tokens.character_id', '=', 'character_infos.character_id')
+            ->where('refresh_tokens.user_id', auth()->id())
+            ->whereNull('refresh_tokens.deleted_at')
+            ->select('character_infos.character_id', 'character_infos.name')
+            ->orderBy('character_infos.name')
+            ->get();
+
         // Check if user can manage requests
         $canManageRequests = auth()->user()->can('blueprint-manager.manage_requests');
 
-        return view('blueprint-manager::requests', compact('corporations', 'canManageRequests'));
+        return view('blueprint-manager::requests', compact('corporations', 'userCharacters', 'canManageRequests'));
     }
 
     /**
@@ -71,7 +80,8 @@ class BlueprintRequestController extends Controller
     }
 
     /**
-     * Get user's character ID (primary character)
+     * Get user's character ID for actions (approving, rejecting, fulfilling)
+     * This uses the primary/newest character as fallback for admin actions
      */
     private function getUserCharacterId()
     {
@@ -90,14 +100,29 @@ class BlueprintRequestController extends Controller
     public function store(Request $request)
     {
         try {
-            // Validate input
+            // Validate input - now includes character_id from form
             $validated = $request->validate([
+                'character_id' => 'required|integer',
                 'corporation_id' => 'required|integer',
                 'blueprint_type_id' => 'required|integer',
                 'quantity' => 'required|integer|min:1|max:1000',
                 'runs' => 'nullable|integer|min:1',
                 'notes' => 'nullable|string|max:1000',
             ]);
+
+            // Verify the character belongs to this user
+            $hasAccess = DB::table('refresh_tokens')
+                ->where('user_id', auth()->id())
+                ->where('character_id', $validated['character_id'])
+                ->whereNull('deleted_at')
+                ->exists();
+            
+            if (!$hasAccess) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Selected character does not belong to you'
+                ], 403);
+            }
 
             // Verify user has access to this corporation
             $userCorpIds = $this->getUserCorporations();
@@ -108,19 +133,10 @@ class BlueprintRequestController extends Controller
                 ], 403);
             }
 
-            // Get user's character ID
-            $characterId = $this->getUserCharacterId();
-            if (!$characterId) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'No character found for this user'
-                ], 400);
-            }
-
             // Create request
             $blueprintRequest = BlueprintRequestModel::create([
                 'corporation_id' => $validated['corporation_id'],
-                'character_id' => $characterId,
+                'character_id' => $validated['character_id'],
                 'blueprint_type_id' => $validated['blueprint_type_id'],
                 'quantity' => $validated['quantity'],
                 'runs' => $validated['runs'],
@@ -160,16 +176,20 @@ class BlueprintRequestController extends Controller
             $viewType = $request->get('view_type', 'my'); // 'my' or 'manage'
             $status = $request->get('status', ''); // Filter by status
             
-            // Get user's character ID
-            $characterId = $this->getUserCharacterId();
+            // Get all user's character IDs for filtering "my requests"
+            $userCharacterIds = DB::table('refresh_tokens')
+                ->where('user_id', auth()->id())
+                ->whereNull('deleted_at')
+                ->pluck('character_id')
+                ->toArray();
             
             // Build query
             $query = BlueprintRequestModel::with(['blueprintType', 'character', 'corporation', 'approver', 'fulfiller'])
                 ->orderBy('created_at', 'desc');
 
             if ($viewType === 'my') {
-                // Show only user's requests
-                $query->where('character_id', $characterId);
+                // Show only user's requests (from ANY of their characters)
+                $query->whereIn('character_id', $userCharacterIds);
             } else {
                 // Show all requests user has access to (managers)
                 if (!auth()->user()->can('blueprint-manager.manage_requests')) {
@@ -194,7 +214,7 @@ class BlueprintRequestController extends Controller
             $requests = $query->get();
 
             // Format data for DataTables
-            $data = $requests->map(function ($req) use ($characterId) {
+            $data = $requests->map(function ($req) use ($userCharacterIds) {
                 return [
                     'id' => $req->id,
                     'corporation_name' => $req->corporation->name ?? 'Unknown',
@@ -212,7 +232,7 @@ class BlueprintRequestController extends Controller
                     'approved_at' => $req->approved_at ? $req->approved_at->format('Y-m-d H:i') : null,
                     'fulfilled_by' => $req->fulfiller->name ?? null,
                     'fulfilled_at' => $req->fulfilled_at ? $req->fulfilled_at->format('Y-m-d H:i') : null,
-                    'is_own' => $req->character_id == $characterId,
+                    'is_own' => in_array($req->character_id, $userCharacterIds),
                 ];
             });
 
@@ -423,18 +443,16 @@ class BlueprintRequestController extends Controller
     public function destroy(BlueprintRequestModel $blueprintRequest)
     {
         try {
-            // Get user's character ID
-            $characterId = $this->getUserCharacterId();
-            if (!$characterId) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'No character found'
-                ], 400);
-            }
+            // Get all user's character IDs
+            $userCharacterIds = DB::table('refresh_tokens')
+                ->where('user_id', auth()->id())
+                ->whereNull('deleted_at')
+                ->pluck('character_id')
+                ->toArray();
 
             // Check if user owns this request or has manage permission
             $canManage = auth()->user()->can('blueprint-manager.manage_requests');
-            $isOwner = $blueprintRequest->character_id == $characterId;
+            $isOwner = in_array($blueprintRequest->character_id, $userCharacterIds);
 
             if (!$canManage && !$isOwner) {
                 return response()->json([
