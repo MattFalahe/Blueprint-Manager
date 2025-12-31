@@ -1,0 +1,788 @@
+/* ================================================================
+   BLUEPRINT MANAGER - DARK THEME COMPATIBLE STYLES
+   Enhanced with higher specificity to override competing styles
+   ================================================================ */
+
+/* ===== WRAPPER & BASE ===== */
+.blueprint-manager-wrapper {
+    /* Namespace wrapper to prevent global style conflicts */
+}
+
+/* ===== COLOR PALETTE ===== */
+.blueprint-manager-wrapper .text-success-bright { color: #51cf66; }
+.blueprint-manager-wrapper .text-warning-bright { color: #ffd43b; }
+.blueprint-manager-wrapper .text-danger-bright { color: #ff6b6b; }
+.blueprint-manager-wrapper .text-info-bright { color: #5dade2; }
+.blueprint-manager-wrapper .text-muted-bright { color: #a0a0a0; }
+
+/* ===== CARDS ===== */
+.blueprint-manager-wrapper .card {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 1.5rem;
+}
+
+.blueprint-manager-wrapper .card-header {
+    background: rgba(0, 0, 0, 0.3);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 0.75rem 1.25rem;
+}
+
+.blueprint-manager-wrapper .card-body {
+    padding: 1.25rem;
+}
+
+.blueprint-manager-wrapper .card-title {
+    margin-bottom: 0;
+    color: #17a2b8;
+}
+
+/* ===== FILTERS & FORMS ===== */
+.blueprint-manager-wrapper .filter-section,
+.blueprint-manager-wrapper .library-filters {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.25rem;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.blueprint-manager-wrapper .filter-row {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-end;
+    flex-wrap: wrap;
+}
+
+.blueprint-manager-wrapper .filter-item {
+    flex: 1;
+    min-width: 200px;
+}
+
+.blueprint-manager-wrapper .form-control,
+.blueprint-manager-wrapper .form-select,
+.blueprint-manager-wrapper select.form-control,
+.blueprint-manager-wrapper input[type="text"],
+.blueprint-manager-wrapper input[type="url"],
+.blueprint-manager-wrapper input[type="number"],
+.blueprint-manager-wrapper textarea {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: inherit;
+}
+
+.blueprint-manager-wrapper .form-control:focus,
+.blueprint-manager-wrapper .form-select:focus,
+.blueprint-manager-wrapper select.form-control:focus,
+.blueprint-manager-wrapper input:focus,
+.blueprint-manager-wrapper textarea:focus {
+    background: rgba(0, 0, 0, 0.4);
+    border-color: #17a2b8;
+    box-shadow: 0 0 0 0.2rem rgba(23, 162, 184, 0.25);
+    color: inherit;
+}
+
+.blueprint-manager-wrapper .form-control::placeholder,
+.blueprint-manager-wrapper input::placeholder,
+.blueprint-manager-wrapper textarea::placeholder {
+    color: #a0a0a0;
+}
+
+.blueprint-manager-wrapper .form-label,
+.blueprint-manager-wrapper label {
+    color: inherit;
+    font-weight: 500;
+}
+
+/* ===== BADGES ===== */
+.blueprint-manager-wrapper .badge-bpo {
+    background-color: rgba(23, 162, 184, 0.2);
+    color: #5dade2;
+    border: 1px solid rgba(23, 162, 184, 0.3);
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.blueprint-manager-wrapper .badge-bpc {
+    background-color: rgba(255, 193, 7, 0.2);
+    color: #ffd43b;
+    border: 1px solid rgba(255, 193, 7, 0.3);
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.blueprint-manager-wrapper .status-badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    display: inline-block;
+}
+
+.blueprint-manager-wrapper .status-pending,
+.blueprint-manager-wrapper .badge-warning {
+    background-color: rgba(255, 193, 7, 0.2);
+    color: #ffd43b;
+    border: 1px solid rgba(255, 193, 7, 0.3);
+}
+
+.blueprint-manager-wrapper .status-approved,
+.blueprint-manager-wrapper .badge-enabled,
+.blueprint-manager-wrapper .badge-success {
+    background-color: rgba(40, 167, 69, 0.2);
+    color: #51cf66;
+    border: 1px solid rgba(40, 167, 69, 0.3);
+}
+
+.blueprint-manager-wrapper .status-rejected,
+.blueprint-manager-wrapper .badge-danger {
+    background-color: rgba(220, 53, 69, 0.2);
+    color: #ff6b6b;
+    border: 1px solid rgba(220, 53, 69, 0.3);
+}
+
+.blueprint-manager-wrapper .status-fulfilled {
+    background-color: rgba(155, 89, 182, 0.2);
+    color: #9b59b6;
+    border: 1px solid rgba(155, 89, 182, 0.3);
+}
+
+.blueprint-manager-wrapper .badge-disabled,
+.blueprint-manager-wrapper .badge-secondary {
+    background-color: rgba(108, 117, 125, 0.2);
+    color: #a0a0a0;
+    border: 1px solid rgba(108, 117, 125, 0.3);
+}
+
+/* ===== INFO BANNERS ===== */
+.blueprint-manager-wrapper .info-banner {
+    background: rgba(23, 162, 184, 0.1);
+    border-left: 4px solid #17a2b8;
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+    border-radius: 0.25rem;
+}
+
+.blueprint-manager-wrapper .warning-banner {
+    background: rgba(255, 193, 7, 0.1);
+    border-left: 4px solid #ffc107;
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+    border-radius: 0.25rem;
+}
+
+.blueprint-manager-wrapper .help-banner {
+    background: rgba(108, 117, 125, 0.1);
+    border-left: 4px solid #6c757d;
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+    border-radius: 0.25rem;
+}
+
+.blueprint-manager-wrapper .success-banner {
+    background: rgba(40, 167, 69, 0.1);
+    border-left: 4px solid #28a745;
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+    border-radius: 0.25rem;
+}
+
+.blueprint-manager-wrapper .danger-banner {
+    background: rgba(220, 53, 69, 0.1);
+    border-left: 4px solid #dc3545;
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+    border-radius: 0.25rem;
+}
+
+/* ===== STATISTICS PAGE - FILTER CONTROLS ===== */
+div.blueprint-manager-wrapper div.filter-controls {
+    background: rgba(0, 0, 0, 0.2) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 0.25rem !important;
+    padding: 1.5rem !important;
+    margin-bottom: 1.5rem !important;
+}
+
+/* ===== STATISTICS PAGE - STAT CARDS (INCREASED SPECIFICITY) ===== */
+div.blueprint-manager-wrapper div.row div.col-md-3 div.stat-card {
+    background: linear-gradient(135deg, rgba(23, 162, 184, 0.15) 0%, rgba(0, 0, 0, 0.3) 100%) !important;
+    border: 1px solid rgba(23, 162, 184, 0.3) !important;
+    border-radius: 0.5rem !important;
+    padding: 1.5rem !important;
+    margin-bottom: 1rem !important;
+    text-align: center !important;
+    transition: all 0.3s ease !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+}
+
+div.blueprint-manager-wrapper div.row div.col-md-3 div.stat-card:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3) !important;
+    border-color: rgba(23, 162, 184, 0.5) !important;
+}
+
+div.blueprint-manager-wrapper div.stat-card h3 {
+    color: #17a2b8 !important;
+    font-size: 1rem !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    margin-bottom: 1rem !important;
+    margin-top: 0 !important;
+}
+
+div.blueprint-manager-wrapper div.stat-value {
+    font-size: 2.5rem !important;
+    font-weight: bold !important;
+    color: #5dade2 !important;
+    line-height: 1 !important;
+    margin-bottom: 0.5rem !important;
+}
+
+div.blueprint-manager-wrapper div.stat-label {
+    font-size: 0.875rem !important;
+    color: #a0a0a0 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+}
+
+/* ===== STATISTICS PAGE - MINI STAT CARDS (INCREASED SPECIFICITY) ===== */
+div.blueprint-manager-wrapper div.row div.col-md-3 div.mini-stat {
+    background: rgba(0, 0, 0, 0.3) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 0.5rem !important;
+    padding: 1rem !important;
+    text-align: center !important;
+    transition: all 0.3s ease !important;
+}
+
+div.blueprint-manager-wrapper div.row div.col-md-3 div.mini-stat:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3) !important;
+}
+
+div.blueprint-manager-wrapper div.mini-stat.pending {
+    border-color: rgba(255, 193, 7, 0.4) !important;
+    background: linear-gradient(135deg, rgba(255, 193, 7, 0.1) 0%, rgba(0, 0, 0, 0.3) 100%) !important;
+}
+
+div.blueprint-manager-wrapper div.mini-stat.approved {
+    border-color: rgba(23, 162, 184, 0.4) !important;
+    background: linear-gradient(135deg, rgba(23, 162, 184, 0.1) 0%, rgba(0, 0, 0, 0.3) 100%) !important;
+}
+
+div.blueprint-manager-wrapper div.mini-stat.fulfilled {
+    border-color: rgba(40, 167, 69, 0.4) !important;
+    background: linear-gradient(135deg, rgba(40, 167, 69, 0.1) 0%, rgba(0, 0, 0, 0.3) 100%) !important;
+}
+
+div.blueprint-manager-wrapper div.mini-stat.rejected {
+    border-color: rgba(220, 53, 69, 0.4) !important;
+    background: linear-gradient(135deg, rgba(220, 53, 69, 0.1) 0%, rgba(0, 0, 0, 0.3) 100%) !important;
+}
+
+div.blueprint-manager-wrapper div.mini-stat-value {
+    font-size: 2rem !important;
+    font-weight: bold !important;
+    line-height: 1 !important;
+    margin-bottom: 0.5rem !important;
+}
+
+div.blueprint-manager-wrapper div.mini-stat.pending div.mini-stat-value {
+    color: #ffd43b !important;
+}
+
+div.blueprint-manager-wrapper div.mini-stat.approved div.mini-stat-value {
+    color: #5dade2 !important;
+}
+
+div.blueprint-manager-wrapper div.mini-stat.fulfilled div.mini-stat-value {
+    color: #51cf66 !important;
+}
+
+div.blueprint-manager-wrapper div.mini-stat.rejected div.mini-stat-value {
+    color: #ff6b6b !important;
+}
+
+div.blueprint-manager-wrapper div.mini-stat-label {
+    font-size: 0.875rem !important;
+    color: #a0a0a0 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+}
+
+/* ===== STATISTICS PAGE - SECTION HEADERS ===== */
+div.blueprint-manager-wrapper h2.section-header {
+    color: #17a2b8 !important;
+    font-size: 1.5rem !important;
+    font-weight: 600 !important;
+    margin-top: 2rem !important;
+    margin-bottom: 1rem !important;
+    padding-bottom: 0.5rem !important;
+    border-bottom: 2px solid rgba(23, 162, 184, 0.3) !important;
+}
+
+div.blueprint-manager-wrapper h2.section-header i {
+    margin-right: 0.5rem !important;
+}
+
+/* ===== STATISTICS PAGE - STATS TABLE ===== */
+div.blueprint-manager-wrapper div.stats-table {
+    background: rgba(0, 0, 0, 0.2) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 0.5rem !important;
+    overflow: hidden !important;
+    margin-bottom: 2rem !important;
+}
+
+div.blueprint-manager-wrapper div.stats-table table.table {
+    margin-bottom: 0 !important;
+}
+
+div.blueprint-manager-wrapper div.stats-table table.table thead th {
+    background: rgba(0, 0, 0, 0.4) !important;
+    border-bottom: 2px solid rgba(23, 162, 184, 0.3) !important;
+    color: #17a2b8 !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    font-size: 0.875rem !important;
+    letter-spacing: 0.5px !important;
+    padding: 1rem !important;
+}
+
+div.blueprint-manager-wrapper div.stats-table table.table tbody td {
+    padding: 0.75rem 1rem !important;
+}
+
+/* ===== STATISTICS PAGE - LOADING SPINNER ===== */
+.blueprint-manager-wrapper .loading-spinner {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #5dade2;
+}
+
+.blueprint-manager-wrapper .loading-spinner i {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+}
+
+/* ===== STATISTICS PAGE - CHARACTER LINK ===== */
+.blueprint-manager-wrapper .character-link {
+    color: #5dade2;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.blueprint-manager-wrapper .character-link:hover {
+    color: #17a2b8;
+    text-decoration: underline;
+}
+
+/* ===== STATISTICS PAGE - ABUSE INDICATOR ===== */
+.blueprint-manager-wrapper .abuse-indicator {
+    display: inline-block;
+    background: rgba(220, 53, 69, 0.2);
+    color: #ff6b6b;
+    border: 1px solid rgba(220, 53, 69, 0.3);
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    margin-right: 0.25rem;
+    margin-bottom: 0.25rem;
+}
+
+.blueprint-manager-wrapper .abuse-indicator i {
+    margin-right: 0.25rem;
+}
+
+/* ===== GENERAL STATISTICS ===== */
+.blueprint-manager-wrapper .stats-section {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.25rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.blueprint-manager-wrapper .stat-number {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #5dade2;
+    line-height: 1.2;
+}
+
+.blueprint-manager-wrapper .stats-group {
+    display: flex;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    flex-wrap: wrap;
+}
+
+.blueprint-manager-wrapper .stat-item {
+    padding: 0.25rem 0.5rem;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.25rem;
+    white-space: nowrap;
+}
+
+.blueprint-manager-wrapper .stat-item i {
+    margin-right: 0.25rem;
+    opacity: 0.7;
+}
+
+/* ===== TABLES ===== */
+.blueprint-manager-wrapper .table {
+    color: inherit;
+}
+
+.blueprint-manager-wrapper .table thead th {
+    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.2);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.875rem;
+    letter-spacing: 0.5px;
+}
+
+.blueprint-manager-wrapper .table tbody tr {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.blueprint-manager-wrapper .table tbody tr:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.blueprint-manager-wrapper .table-responsive {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 0.25rem;
+    padding: 0.5rem;
+}
+
+/* ===== TABS ===== */
+.blueprint-manager-wrapper .nav-tabs {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.blueprint-manager-wrapper .nav-tabs .nav-link {
+    border: 1px solid transparent;
+    color: #a0a0a0;
+    padding: 0.75rem 1rem;
+}
+
+.blueprint-manager-wrapper .nav-tabs .nav-link:hover {
+    border-color: rgba(255, 255, 255, 0.1);
+    color: inherit;
+}
+
+.blueprint-manager-wrapper .nav-tabs .nav-link.active {
+    background: rgba(0, 0, 0, 0.2);
+    border-color: rgba(255, 255, 255, 0.1);
+    border-bottom-color: transparent;
+    color: #17a2b8;
+    font-weight: 600;
+}
+
+.blueprint-manager-wrapper .tab-content {
+    background: rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: none;
+}
+
+.blueprint-manager-wrapper .tab-pane {
+    padding: 1.5rem;
+}
+
+/* ===== SETTINGS SECTION ===== */
+.blueprint-manager-wrapper .settings-section {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 0.25rem;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.blueprint-manager-wrapper .settings-section h4 {
+    color: #17a2b8;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 1.25rem;
+}
+
+/* ===== MODALS ===== */
+.blueprint-manager-wrapper .modal-content {
+    background: #2c2c2c;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.blueprint-manager-wrapper .modal-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.blueprint-manager-wrapper .modal-footer {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.blueprint-manager-wrapper .modal-title {
+    color: #17a2b8;
+}
+
+/* ===== BUTTONS ===== */
+.blueprint-manager-wrapper .btn-group-sm > .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+.blueprint-manager-wrapper .btn-primary {
+    background-color: #17a2b8;
+    border-color: #17a2b8;
+}
+
+.blueprint-manager-wrapper .btn-primary:hover {
+    background-color: #138496;
+    border-color: #117a8b;
+}
+
+/* ===== PROGRESS BARS ===== */
+.blueprint-manager-wrapper .progress {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.blueprint-manager-wrapper .progress-bar {
+    background-color: #17a2b8;
+}
+
+.blueprint-manager-wrapper .progress-bar.bg-success {
+    background-color: #51cf66 !important;
+}
+
+.blueprint-manager-wrapper .progress-bar.bg-warning {
+    background-color: #ffd43b !important;
+}
+
+.blueprint-manager-wrapper .progress-bar.bg-danger {
+    background-color: #ff6b6b !important;
+}
+
+/* ===== TOOLTIPS ===== */
+.blueprint-manager-wrapper .tooltip-icon {
+    cursor: help;
+    color: #5dade2;
+    margin-left: 0.25rem;
+}
+
+/* ===== ALERTS ===== */
+.blueprint-manager-wrapper .alert {
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 0.25rem;
+}
+
+.blueprint-manager-wrapper .alert-success {
+    background-color: rgba(40, 167, 69, 0.1);
+    color: #51cf66;
+    border-color: rgba(40, 167, 69, 0.3);
+}
+
+.blueprint-manager-wrapper .alert-danger {
+    background-color: rgba(220, 53, 69, 0.1);
+    color: #ff6b6b;
+    border-color: rgba(220, 53, 69, 0.3);
+}
+
+.blueprint-manager-wrapper .alert-warning {
+    background-color: rgba(255, 193, 7, 0.1);
+    color: #ffd43b;
+    border-color: rgba(255, 193, 7, 0.3);
+}
+
+.blueprint-manager-wrapper .alert-info {
+    background-color: rgba(23, 162, 184, 0.1);
+    color: #5dade2;
+    border-color: rgba(23, 162, 184, 0.3);
+}
+
+/* ===== CUSTOM CONTROLS ===== */
+.blueprint-manager-wrapper .custom-control-label::before {
+    background-color: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.blueprint-manager-wrapper .custom-control-input:checked ~ .custom-control-label::before {
+    background-color: #17a2b8;
+    border-color: #17a2b8;
+}
+
+.blueprint-manager-wrapper .custom-switch .custom-control-label::after {
+    background-color: #fff;
+}
+
+/* ===== SELECT2 DARK THEME SUPPORT ===== */
+.blueprint-manager-wrapper .select2-container--default .select2-selection--single {
+    background-color: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.blueprint-manager-wrapper .select2-container--default .select2-selection--single .select2-selection__rendered {
+    color: inherit;
+}
+
+.blueprint-manager-wrapper .select2-container--default .select2-selection--single .select2-selection__arrow {
+    border-left: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* ===== DATATABLES DARK THEME SUPPORT ===== */
+.blueprint-manager-wrapper .dataTables_wrapper .dataTables_length,
+.blueprint-manager-wrapper .dataTables_wrapper .dataTables_filter,
+.blueprint-manager-wrapper .dataTables_wrapper .dataTables_info,
+.blueprint-manager-wrapper .dataTables_wrapper .dataTables_processing,
+.blueprint-manager-wrapper .dataTables_wrapper .dataTables_paginate {
+    color: inherit;
+}
+
+.blueprint-manager-wrapper .dataTables_wrapper .dataTables_length select,
+.blueprint-manager-wrapper .dataTables_wrapper .dataTables_filter input {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: inherit;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+}
+
+.blueprint-manager-wrapper .dataTables_wrapper .dataTables_paginate .paginate_button {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: inherit !important;
+    padding: 0.25rem 0.75rem;
+    margin: 0 0.125rem;
+    border-radius: 0.25rem;
+}
+
+.blueprint-manager-wrapper .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: inherit !important;
+}
+
+.blueprint-manager-wrapper .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+    background: #17a2b8 !important;
+    color: white !important;
+    border-color: #17a2b8;
+}
+
+.blueprint-manager-wrapper .dataTables_wrapper .dataTables_paginate .paginate_button.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ===== PAGINATION ===== */
+.blueprint-manager-wrapper .pagination {
+    margin: 1rem 0;
+}
+
+.blueprint-manager-wrapper .page-link {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: inherit;
+}
+
+.blueprint-manager-wrapper .page-link:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.blueprint-manager-wrapper .page-item.active .page-link {
+    background-color: #17a2b8;
+    border-color: #17a2b8;
+}
+
+/* ===== INFO BOXES ===== */
+.blueprint-manager-wrapper .info-box {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.25rem;
+    display: flex;
+    margin-bottom: 1rem;
+}
+
+.blueprint-manager-wrapper .info-box-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 70px;
+    border-radius: 0.25rem 0 0 0.25rem;
+}
+
+.blueprint-manager-wrapper .info-box-content {
+    padding: 0.5rem 1rem;
+    flex: 1;
+}
+
+.blueprint-manager-wrapper .info-box-text {
+    display: block;
+    font-size: 0.875rem;
+    color: #a0a0a0;
+    text-transform: uppercase;
+}
+
+.blueprint-manager-wrapper .info-box-number {
+    display: block;
+    font-weight: bold;
+    font-size: 1.25rem;
+}
+
+/* ===== MISC HELPERS ===== */
+.blueprint-manager-wrapper .text-center {
+    text-align: center;
+}
+
+.blueprint-manager-wrapper .mb-3 {
+    margin-bottom: 1rem;
+}
+
+.blueprint-manager-wrapper .mt-3 {
+    margin-top: 1rem;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+    .blueprint-manager-wrapper .filter-row {
+        flex-direction: column;
+    }
+    
+    .blueprint-manager-wrapper .filter-item {
+        width: 100%;
+        min-width: unset;
+    }
+    
+    .blueprint-manager-wrapper .stats-group {
+        flex-direction: column;
+    }
+    
+    .blueprint-manager-wrapper .table-responsive {
+        overflow-x: auto;
+    }
+}
+
+@media (max-width: 576px) {
+    .blueprint-manager-wrapper .card-body {
+        padding: 1rem;
+    }
+    
+    .blueprint-manager-wrapper .filter-section,
+    .blueprint-manager-wrapper .library-filters {
+        padding: 1rem;
+    }
+    
+    .blueprint-manager-wrapper .settings-section {
+        padding: 1rem;
+    }
+}
