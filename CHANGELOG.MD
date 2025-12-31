@@ -5,6 +5,26 @@ Each version entry lists key changes for easier reference and upgrade planning.
 
 ---
 
+## Version 1.0.2 — *December 2025*
+
+### Fixed
+- Fixed blueprint requests being submitted with incorrect character
+  - Previously, requests were always submitted by the user's most recently added character
+  - Users viewing a specific character in SeAT would have requests submitted by a different character
+  - This occurred because SeAT v5.x doesn't maintain "selected character" state in session for form submissions
+
+### Added
+- **Character Selector**: Added dropdown to request form allowing users to explicitly choose which character submits the request
+- Character validation to ensure selected character belongs to the current user
+- Translation key for "Requesting Character" label
+
+### Improved
+- Request ownership detection now checks all of user's characters instead of just one
+- Users can now delete requests made by any of their characters, not just their primary character
+- "My Requests" tab now displays requests from all of user's characters
+
+---
+
 ## Version 1.0.1 — *December 2025*
 
 ### Fixed

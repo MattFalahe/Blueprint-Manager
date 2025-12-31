@@ -165,6 +165,17 @@
                     </div>
 
                     <div class="form-group">
+                        <label for="request_character_id">{{ trans('blueprint-manager::common.requesting_character') }} *</label>
+                        <select id="request_character_id" name="character_id" class="form-control" required>
+                            <option value="">-- Select character --</option>
+                            @foreach($userCharacters as $char)
+                            <option value="{{ $char->character_id }}">{{ $char->name }}</option>
+                            @endforeach
+                        </select>
+                        <small class="form-text text-muted">Which character is making this request?</small>
+                    </div>
+
+                    <div class="form-group">
                         <label for="request_blueprint_type_id">{{ trans('blueprint-manager::common.blueprint') }} *</label>
                         <select id="request_blueprint_type_id" name="blueprint_type_id" class="form-control" required disabled>
                             <option value="">-- Select corporation first --</option>
@@ -543,6 +554,7 @@ $(document).ready(function() {
     // New Request button
     $('#newRequestBtn').on('click', function() {
         $('#newRequestForm')[0].reset();
+        $('#request_character_id').val('');
         $('#request_blueprint_type_id').prop('disabled', true).html('<option value="">-- Select corporation first --</option>');
         $('#newRequestModal').modal('show');
     });
@@ -589,6 +601,7 @@ $(document).ready(function() {
         e.preventDefault();
         
         const formData = {
+            character_id: $('#request_character_id').val(),
             corporation_id: $('#request_corporation_id').val(),
             blueprint_type_id: $('#request_blueprint_type_id').val(),
             quantity: $('#request_quantity').val(),
