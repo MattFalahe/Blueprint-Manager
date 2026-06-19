@@ -2,6 +2,7 @@
 
 namespace BlueprintManager\Http\Controllers;
 
+use BlueprintManager\Services\VersionChecker;
 use Seat\Web\Http\Controllers\Controller;
 
 class BlueprintHelpController extends Controller
@@ -13,6 +14,11 @@ class BlueprintHelpController extends Controller
      */
     public function index()
     {
-        return view('blueprint-manager::help.index');
+        // Installed-vs-latest status for the Version Status card. Cached +
+        // timeout-guarded inside the service, so a Packagist hiccup never
+        // blocks the Help page.
+        $versionStatus = app(VersionChecker::class)->getStatus();
+
+        return view('blueprint-manager::help.index', compact('versionStatus'));
     }
 }

@@ -4,7 +4,7 @@
 @section('page_header', trans('blueprint-manager::common.blueprint_library'))
 
 @push('head')
-<link rel="stylesheet" href="{{ asset('vendor/blueprint-manager/css/blueprint-manager.css') }}">
+<link rel="stylesheet" href="{{ asset('vendor/blueprint-manager/css/blueprint-manager.css') }}?v=3">
 @endpush
 
 
@@ -15,53 +15,60 @@
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
-            
-            {{-- Info Banner --}}
-            <div class="info-banner">
-                <i class="fas fa-info-circle"></i>
-                <strong>About Blueprint Library:</strong>
-                View your corporation's blueprints organized by the categories you configured in Settings. 
-                Click on any blueprint to see detailed information including locations and research status.
-            </div>
 
-            @if($corporations->isEmpty())
-            <div class="warning-banner">
-                <i class="fas fa-exclamation-triangle"></i>
-                <strong>No Blueprints Found:</strong>
-                No corporations with blueprints were found, or container configurations haven't been set up yet.
-                Go to <a href="{{ route('blueprint-manager.settings') }}">Settings</a> to configure blueprint containers.
-            </div>
-            @else
-
-            {{-- Filters --}}
-            <div class="library-filters">
-                <div class="filter-row">
-                    <div class="filter-item">
-                        <label for="corporationSelect">{{ trans('blueprint-manager::common.corporation') }}</label>
-                        <select id="corporationSelect" class="form-control">
-                            <option value="">-- {{ trans('blueprint-manager::common.select_corporation') }} --</option>
-                            @foreach($corporations as $corp)
-                            <option value="{{ $corp->corporation_id }}">{{ $corp->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="filter-item">
-                        <label for="categorySelect">{{ trans('blueprint-manager::common.category') }}</label>
-                        <select id="categorySelect" class="form-control" disabled>
-                            <option value="">-- {{ trans('blueprint-manager::common.all_categories') }} --</option>
-                        </select>
-                    </div>
-                    <div class="filter-item" style="flex: 0;">
-                        <button type="button" class="btn btn-primary" id="loadBlueprintsBtn" disabled>
-                            <i class="fas fa-sync"></i> {{ trans('blueprint-manager::common.refresh') }}
-                        </button>
-                    </div>
+            <div class="card card-dark">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-book"></i>
+                        {{ trans('blueprint-manager::common.blueprint_library') }}
+                    </h3>
                 </div>
-            </div>
-
-            {{-- Blueprints Table --}}
-            <div class="card">
                 <div class="card-body">
+
+                    {{-- Info Banner --}}
+                    <div class="info-banner">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>About Blueprint Library:</strong>
+                        View your corporation's blueprints organized by the categories you configured in Settings.
+                        Click on any blueprint to see detailed information including locations and research status.
+                    </div>
+
+                    @if($corporations->isEmpty())
+                    <div class="warning-banner">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>No Blueprints Found:</strong>
+                        No corporations with blueprints were found, or container configurations haven't been set up yet.
+                        Go to <a href="{{ route('blueprint-manager.settings') }}">Settings</a> to configure blueprint containers.
+                    </div>
+                    @else
+
+                    {{-- Filters --}}
+                    <div class="library-filters">
+                        <div class="filter-row">
+                            <div class="filter-item">
+                                <label for="corporationSelect">{{ trans('blueprint-manager::common.corporation') }}</label>
+                                <select id="corporationSelect" class="form-control">
+                                    <option value="">-- {{ trans('blueprint-manager::common.select_corporation') }} --</option>
+                                    @foreach($corporations as $corp)
+                                    <option value="{{ $corp->corporation_id }}">{{ $corp->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="filter-item">
+                                <label for="categorySelect">{{ trans('blueprint-manager::common.category') }}</label>
+                                <select id="categorySelect" class="form-control" disabled>
+                                    <option value="">-- {{ trans('blueprint-manager::common.all_categories') }} --</option>
+                                </select>
+                            </div>
+                            <div class="filter-item" style="flex: 0;">
+                                <button type="button" class="btn btn-bp-primary" id="loadBlueprintsBtn" disabled>
+                                    <i class="fas fa-sync"></i> {{ trans('blueprint-manager::common.refresh') }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Blueprints Table --}}
                     <div class="table-responsive">
                         <table id="blueprintsTable" class="table table-striped table-hover" style="width:100%">
                             <thead>
@@ -85,10 +92,11 @@
                             </tbody>
                         </table>
                     </div>
+
+                    @endif
+
                 </div>
             </div>
-
-            @endif
 
         </div>
     </div>
@@ -131,6 +139,18 @@ $(document).ready(function() {
     let blueprintsTable;
     let selectedCorporationId = null;
     let selectedCategory = null;
+
+    function escapeHtml(text) {
+        if (text === null || text === undefined) return '';
+        const map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        };
+        return text.toString().replace(/[&<>"']/g, function(m) { return map[m]; });
+    }
     
     // Initialize DataTable (empty initially)
     blueprintsTable = $('#blueprintsTable').DataTable({
@@ -162,7 +182,7 @@ $(document).ready(function() {
                 targets: 1, // Category column
                 render: function(data, type, row) {
                     if (type === 'display') {
-                        return '<span class="category-badge">' + data + '</span>';
+                        return '<span class="category-badge">' + escapeHtml(data) + '</span>';
                     }
                     return data;
                 }
@@ -281,7 +301,8 @@ $(document).ready(function() {
                 if (response.success) {
                     let html = '<option value="">-- {{ trans('blueprint-manager::common.all_categories') }} --</option>';
                     $.each(response.categories, function(category, count) {
-                        html += '<option value="' + category + '">' + category + ' (' + count + ')</option>';
+                        const safe = escapeHtml(category);
+                        html += '<option value="' + safe + '">' + safe + ' (' + escapeHtml(count) + ')</option>';
                     });
                     $('#categorySelect').html(html);
                 }
@@ -331,7 +352,7 @@ $(document).ready(function() {
     function updateTableMessage(message) {
         blueprintsTable.clear().draw();
         $('#blueprintsTable tbody').html(
-            '<tr><td colspan="8" class="text-center text-muted"><i class="fas fa-info-circle"></i> ' + message + '</td></tr>'
+            '<tr><td colspan="8" class="text-center text-muted"><i class="fas fa-info-circle"></i> ' + escapeHtml(message) + '</td></tr>'
         );
     }
 
@@ -361,14 +382,14 @@ $(document).ready(function() {
                     renderBlueprintDetails(response);
                 } else {
                     $('#blueprintDetailsContent').html(
-                        '<div class="alert alert-danger"><i class="fas fa-exclamation-triangle"></i> ' + response.message + '</div>'
+                        '<div class="alert alert-danger"><i class="fas fa-exclamation-triangle"></i> ' + escapeHtml(response.message) + '</div>'
                     );
                 }
             },
             error: function(xhr) {
                 const errorMsg = xhr.responseJSON?.message || 'Failed to load details';
                 $('#blueprintDetailsContent').html(
-                    '<div class="alert alert-danger"><i class="fas fa-exclamation-triangle"></i> ' + errorMsg + '</div>'
+                    '<div class="alert alert-danger"><i class="fas fa-exclamation-triangle"></i> ' + escapeHtml(errorMsg) + '</div>'
                 );
             }
         });
@@ -383,11 +404,12 @@ $(document).ready(function() {
             html += '<div class="location-group">';
             html += '<div class="location-header"><i class="fas fa-flask"></i> Active Research Jobs</div>';
             data.research_jobs.forEach(function(job) {
+                const progress = Number(job.progress) || 0;
                 html += '<div class="blueprint-item">';
-                html += '<strong>' + job.activity + ':</strong> ' + job.description + '<br>';
-                html += '<small>Time Remaining: ' + job.time_remaining + '</small>';
+                html += '<strong>' + escapeHtml(job.activity) + ':</strong> ' + escapeHtml(job.description) + '<br>';
+                html += '<small>Time Remaining: ' + escapeHtml(job.time_remaining) + '</small>';
                 html += '<div class="research-progress">';
-                html += '<div class="research-progress-bar" style="width: ' + job.progress + '%">' + job.progress + '%</div>';
+                html += '<div class="research-progress-bar" style="width: ' + progress + '%">' + progress + '%</div>';
                 html += '</div>';
                 html += '</div>';
             });
@@ -399,19 +421,19 @@ $(document).ready(function() {
         data.locations.forEach(function(location) {
             html += '<div class="location-group">';
             html += '<div class="location-header">';
-            html += '<i class="fas fa-box"></i> ' + location.container_name;
-            html += ' <span class="badge badge-secondary ml-2">' + location.quantity + ' blueprints</span>';
+            html += '<i class="fas fa-box"></i> ' + escapeHtml(location.container_name);
+            html += ' <span class="badge badge-secondary ml-2">' + escapeHtml(location.quantity) + ' blueprints</span>';
             html += '</div>';
-            
+
             location.blueprints.forEach(function(bp) {
                 html += '<div class="blueprint-item">';
                 html += '<div class="stats-group">';
-                html += '<span class="stat-badge"><i class="fas fa-cog"></i> ME: ' + bp.material_efficiency + '</span>';
-                html += '<span class="stat-badge"><i class="fas fa-clock"></i> TE: ' + bp.time_efficiency + '</span>';
+                html += '<span class="stat-badge"><i class="fas fa-cog"></i> ME: ' + escapeHtml(bp.material_efficiency) + '</span>';
+                html += '<span class="stat-badge"><i class="fas fa-clock"></i> TE: ' + escapeHtml(bp.time_efficiency) + '</span>';
                 if (bp.runs !== -1) {
-                    html += '<span class="stat-badge"><i class="fas fa-redo"></i> Runs: ' + bp.runs + '</span>';
+                    html += '<span class="stat-badge"><i class="fas fa-redo"></i> Runs: ' + escapeHtml(bp.runs) + '</span>';
                 }
-                html += '<span class="stat-badge"><i class="fas fa-layer-group"></i> Qty: ' + bp.quantity + '</span>';
+                html += '<span class="stat-badge"><i class="fas fa-layer-group"></i> Qty: ' + escapeHtml(bp.quantity) + '</span>';
                 html += '</div>';
                 html += '</div>';
             });
@@ -425,7 +447,7 @@ $(document).ready(function() {
     function showAlert(type, message) {
         const alert = $('<div class="alert alert-' + type + ' alert-dismissible fade show" role="alert">' +
             '<i class="fas fa-' + (type === 'success' ? 'check-circle' : 'exclamation-triangle') + '"></i> ' +
-            message +
+            escapeHtml(message) +
             '<button type="button" class="close" data-dismiss="alert" aria-label="Close">' +
             '<span aria-hidden="true">&times;</span>' +
             '</button>' +

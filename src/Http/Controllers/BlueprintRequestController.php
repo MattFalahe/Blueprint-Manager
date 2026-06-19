@@ -8,16 +8,49 @@ use Illuminate\Support\Facades\DB;
 use BlueprintManager\Models\BlueprintRequest as BlueprintRequestModel;
 use BlueprintManager\Services\BlueprintService;
 use BlueprintManager\Services\DiscordNotificationService;
+use BlueprintManager\Services\BlueprintAccessService;
 
 class BlueprintRequestController extends Controller
 {
     protected $blueprintService;
     protected $notificationService;
+    protected $accessService;
 
-    public function __construct(BlueprintService $blueprintService, DiscordNotificationService $notificationService)
+    public function __construct(BlueprintService $blueprintService, DiscordNotificationService $notificationService, BlueprintAccessService $accessService)
     {
         $this->blueprintService = $blueprintService;
         $this->notificationService = $notificationService;
+        $this->accessService = $accessService;
+    }
+
+    /**
+     * Publish a request-lifecycle event to the Manager Core EventBus so
+     * consumers (HR Manager) can build a per-member engagement signal.
+     * No-op + swallowed when Manager Core isn't installed, so the request
+     * workflow never depends on it. `character_id` is always the REQUESTER;
+     * the manager who acted rides in `actor_character_id`.
+     */
+    private function publishLifecycleEvent(string $topic, BlueprintRequestModel $req, ?int $actorCharacterId = null): void
+    {
+        if (!class_exists(\ManagerCore\Topics::class)) {
+            return;
+        }
+        try {
+            \ManagerCore\Topics::publish($topic, [
+                'request_id'         => (int) $req->id,
+                'corporation_id'     => (int) $req->corporation_id,
+                'character_id'       => (int) $req->character_id,
+                'blueprint_type_id'  => (int) $req->blueprint_type_id,
+                'quantity'           => (int) $req->quantity,
+                'runs'               => $req->runs !== null ? (int) $req->runs : null,
+                'status'             => (string) $req->status,
+                'actor_character_id' => $actorCharacterId !== null ? (int) $actorCharacterId : null,
+                'response_notes'     => $req->response_notes,
+                'occurred_at'        => now()->toIso8601String(),
+            ]);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('[Blueprint Manager] EventBus publish failed: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -25,72 +58,67 @@ class BlueprintRequestController extends Controller
      */
     public function index()
     {
-        // Get corporations the user has access to
-        $userCorpIds = $this->getUserCorporations();
-        
-        if ($userCorpIds === null) {
-            // Superadmin - get all corporations with blueprints
-            $corporations = DB::table('corporation_infos')
-                ->join('corporation_blueprints', 'corporation_infos.corporation_id', '=', 'corporation_blueprints.corporation_id')
-                ->select('corporation_infos.corporation_id', 'corporation_infos.name')
-                ->distinct()
-                ->orderBy('corporation_infos.name')
-                ->get();
-        } else {
-            // Get only user's corporations that have blueprints
-            $corporations = DB::table('corporation_infos')
-                ->join('corporation_blueprints', 'corporation_infos.corporation_id', '=', 'corporation_blueprints.corporation_id')
-                ->whereIn('corporation_infos.corporation_id', $userCorpIds)
-                ->select('corporation_infos.corporation_id', 'corporation_infos.name')
-                ->distinct()
-                ->orderBy('corporation_infos.name')
-                ->get();
+        $userCorpIds = $this->accessService->visibleCorporationIds();
+
+        $corpQuery = DB::table('corporation_infos')
+            ->join('corporation_blueprints', 'corporation_infos.corporation_id', '=', 'corporation_blueprints.corporation_id')
+            ->select('corporation_infos.corporation_id', 'corporation_infos.name')
+            ->distinct()
+            ->orderBy('corporation_infos.name');
+
+        if ($userCorpIds !== null) {
+            $corpQuery->whereIn('corporation_infos.corporation_id', $userCorpIds);
         }
 
-        // Get user's characters for the character selector
-        $userCharacters = DB::table('refresh_tokens')
-            ->join('character_infos', 'refresh_tokens.character_id', '=', 'character_infos.character_id')
-            ->where('refresh_tokens.user_id', auth()->id())
-            ->whereNull('refresh_tokens.deleted_at')
-            ->select('character_infos.character_id', 'character_infos.name')
-            ->orderBy('character_infos.name')
-            ->get();
+        $corporations = $corpQuery->get();
+
+        // Resolve the user's SeAT main character. Requests are always
+        // submitted from the main so the requester attribution matches
+        // the user's recognised identity, not whichever alt was most
+        // recently linked. Null when the user has not picked a main yet.
+        $user = auth()->user();
+        $mainCharacter = null;
+        if ($user && !empty($user->main_character_id)) {
+            $mainCharacter = DB::table('character_infos')
+                ->where('character_id', $user->main_character_id)
+                ->select('character_id', 'name')
+                ->first();
+        }
 
         // Check if user can manage requests
-        $canManageRequests = auth()->user()->can('blueprint-manager.manage_requests');
+        $canManageRequests = $user ? $user->can('blueprint-manager.manage_requests') : false;
 
-        return view('blueprint-manager::requests', compact('corporations', 'userCharacters', 'canManageRequests'));
+        return view('blueprint-manager::requests', compact('corporations', 'mainCharacter', 'canManageRequests'));
     }
 
     /**
-     * Get user's accessible corporation IDs
-     */
-    private function getUserCorporations()
-    {
-        $corporationIds = DB::table('refresh_tokens')
-            ->join('character_affiliations', 'refresh_tokens.character_id', '=', 'character_affiliations.character_id')
-            ->where('refresh_tokens.user_id', auth()->id())
-            ->whereNull('refresh_tokens.deleted_at')
-            ->pluck('character_affiliations.corporation_id')
-            ->unique()
-            ->filter()
-            ->toArray();
-        
-        return !empty($corporationIds) ? $corporationIds : null;
-    }
-
-    /**
-     * Get user's character ID for actions (approving, rejecting, fulfilling)
-     * This uses the primary/newest character as fallback for admin actions
+     * Get the acting character ID for management actions (approve / reject /
+     * fulfill).
+     *
+     * Resolves to the SeAT main character (users.main_character_id) so the
+     * "Approved by / Rejected by / Fulfilled by" attribution in Discord
+     * notifications and request history always shows the user's recognised
+     * identity. Falls back to the most recently linked character only when
+     * no main is set, to keep the action functional during edge cases.
      */
     private function getUserCharacterId()
     {
+        $user = auth()->user();
+
+        if (!$user) {
+            return null;
+        }
+
+        if (!empty($user->main_character_id)) {
+            return $user->main_character_id;
+        }
+
         $character = DB::table('refresh_tokens')
-            ->where('user_id', auth()->id())
+            ->where('user_id', $user->id)
             ->whereNull('deleted_at')
             ->orderBy('created_at', 'desc')
             ->first();
-        
+
         return $character ? $character->character_id : null;
     }
 
@@ -100,9 +128,10 @@ class BlueprintRequestController extends Controller
     public function store(Request $request)
     {
         try {
-            // Validate input - now includes character_id from form
+            // Validate input. character_id is NOT accepted from the form —
+            // the requester is always resolved server-side to the user's
+            // SeAT main character.
             $validated = $request->validate([
-                'character_id' => 'required|integer',
                 'corporation_id' => 'required|integer',
                 'blueprint_type_id' => 'required|integer',
                 'quantity' => 'required|integer|min:1|max:1000',
@@ -110,22 +139,22 @@ class BlueprintRequestController extends Controller
                 'notes' => 'nullable|string|max:1000',
             ]);
 
-            // Verify the character belongs to this user
-            $hasAccess = DB::table('refresh_tokens')
-                ->where('user_id', auth()->id())
-                ->where('character_id', $validated['character_id'])
-                ->whereNull('deleted_at')
-                ->exists();
-            
-            if (!$hasAccess) {
+            // Resolve the requesting character to the user's SeAT main so
+            // notifications and history consistently show the user's
+            // recognised identity, not a recently-linked alt.
+            $user = auth()->user();
+            $characterId = $user ? $user->main_character_id : null;
+
+            if (empty($characterId)) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Selected character does not belong to you'
-                ], 403);
+                    'message' => 'No main character is set on your SeAT account. Please set one in your SeAT profile before submitting blueprint requests.'
+                ], 400);
             }
 
-            // Verify user has access to this corporation
-            $userCorpIds = $this->getUserCorporations();
+            // Verify user has access to this corporation (own corp or a corp
+            // whose library has been shared with them).
+            $userCorpIds = $this->accessService->visibleCorporationIds();
             if ($userCorpIds !== null && !in_array($validated['corporation_id'], $userCorpIds)) {
                 return response()->json([
                     'success' => false,
@@ -133,10 +162,11 @@ class BlueprintRequestController extends Controller
                 ], 403);
             }
 
-            // Create request
+            // Create request — character_id is the server-resolved main,
+            // not anything the form sent.
             $blueprintRequest = BlueprintRequestModel::create([
                 'corporation_id' => $validated['corporation_id'],
-                'character_id' => $validated['character_id'],
+                'character_id' => $characterId,
                 'blueprint_type_id' => $validated['blueprint_type_id'],
                 'quantity' => $validated['quantity'],
                 'runs' => $validated['runs'],
@@ -146,6 +176,9 @@ class BlueprintRequestController extends Controller
 
             // Send Discord notification
             $this->notificationService->notifyRequestCreated($blueprintRequest);
+
+            // Publish to Manager Core EventBus (consumers like HR Manager).
+            $this->publishLifecycleEvent('blueprint.request.created', $blueprintRequest);
 
             return response()->json([
                 'success' => true,
@@ -199,8 +232,10 @@ class BlueprintRequestController extends Controller
                     ], 403);
                 }
                 
-                // Filter by user's corporations if not superadmin
-                $userCorpIds = $this->getUserCorporations();
+                // Managers only ever see requests for corps they belong to.
+                // Library sharing grants view/request access, never request
+                // management, so this uses the manageable (own-corp) set.
+                $userCorpIds = $this->accessService->manageableCorporationIds();
                 if ($userCorpIds !== null) {
                     $query->whereIn('corporation_id', $userCorpIds);
                 }
@@ -295,6 +330,8 @@ class BlueprintRequestController extends Controller
                 $request->input('notes')
             );
 
+            $this->publishLifecycleEvent('blueprint.request.approved', $blueprintRequest, $characterId);
+
             return response()->json([
                 'success' => true,
                 'message' => 'Request approved successfully.'
@@ -358,6 +395,8 @@ class BlueprintRequestController extends Controller
                 $rejectorName ?? 'Unknown',
                 $request->input('notes')
             );
+
+            $this->publishLifecycleEvent('blueprint.request.rejected', $blueprintRequest, $characterId);
 
             return response()->json([
                 'success' => true,
@@ -423,6 +462,8 @@ class BlueprintRequestController extends Controller
                 $fulfillerName ?? 'Unknown',
                 $request->input('notes')
             );
+
+            $this->publishLifecycleEvent('blueprint.request.fulfilled', $blueprintRequest, $characterId);
 
             return response()->json([
                 'success' => true,
@@ -490,8 +531,8 @@ class BlueprintRequestController extends Controller
     public function getAvailableBlueprints($corporationId)
     {
         try {
-            // Verify user has access
-            $userCorpIds = $this->getUserCorporations();
+            // Verify user has access (own corp or a shared library)
+            $userCorpIds = $this->accessService->visibleCorporationIds();
             if ($userCorpIds !== null && !in_array($corporationId, $userCorpIds)) {
                 return response()->json([
                     'success' => false,

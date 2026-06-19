@@ -7,6 +7,10 @@ return [
     |--------------------------------------------------------------------------
     */
 
+    // Plugin version (fallback for the Version Status card when Composer
+    // metadata is unavailable, e.g. running from a dev branch).
+    'version' => '2.0.0',
+
     // Default categories for blueprint display
     'default_categories' => [
         'BPO' => 'Original Blueprints',
@@ -21,11 +25,11 @@ return [
         'rejected' => 'Rejected',
     ],
 
-    // Activity IDs for industry jobs
+    // Activity IDs for industry jobs (per EVE ESI)
     'industry_activities' => [
-        'copying' => 3,
+        'te_research' => 3,
         'me_research' => 4,
-        'te_research' => 5,
+        'copying' => 5,
     ],
 
     // Default pagination limits

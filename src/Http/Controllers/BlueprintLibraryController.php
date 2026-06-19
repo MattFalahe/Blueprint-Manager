@@ -7,18 +7,22 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use BlueprintManager\Services\BlueprintService;
 use BlueprintManager\Services\ResearchProgressService;
+use BlueprintManager\Services\BlueprintAccessService;
 
 class BlueprintLibraryController extends Controller
 {
     protected $blueprintService;
     protected $researchService;
+    protected $accessService;
 
     public function __construct(
         BlueprintService $blueprintService,
-        ResearchProgressService $researchService
+        ResearchProgressService $researchService,
+        BlueprintAccessService $accessService
     ) {
         $this->blueprintService = $blueprintService;
         $this->researchService = $researchService;
+        $this->accessService = $accessService;
     }
 
     /**
@@ -26,47 +30,21 @@ class BlueprintLibraryController extends Controller
      */
     public function index()
     {
-        // Get corporations the user has access to
-        $userCorpIds = $this->getUserCorporations();
-        
-        if ($userCorpIds === null) {
-            // Superadmin - get all corporations with blueprints
-            $corporations = DB::table('corporation_infos')
-                ->join('corporation_blueprints', 'corporation_infos.corporation_id', '=', 'corporation_blueprints.corporation_id')
-                ->select('corporation_infos.corporation_id', 'corporation_infos.name')
-                ->distinct()
-                ->orderBy('corporation_infos.name')
-                ->get();
-        } else {
-            // Get only user's corporations that have blueprints
-            $corporations = DB::table('corporation_infos')
-                ->join('corporation_blueprints', 'corporation_infos.corporation_id', '=', 'corporation_blueprints.corporation_id')
-                ->whereIn('corporation_infos.corporation_id', $userCorpIds)
-                ->select('corporation_infos.corporation_id', 'corporation_infos.name')
-                ->distinct()
-                ->orderBy('corporation_infos.name')
-                ->get();
+        $userCorpIds = $this->accessService->visibleCorporationIds();
+
+        $query = DB::table('corporation_infos')
+            ->join('corporation_blueprints', 'corporation_infos.corporation_id', '=', 'corporation_blueprints.corporation_id')
+            ->select('corporation_infos.corporation_id', 'corporation_infos.name')
+            ->distinct()
+            ->orderBy('corporation_infos.name');
+
+        if ($userCorpIds !== null) {
+            $query->whereIn('corporation_infos.corporation_id', $userCorpIds);
         }
 
-        return view('blueprint-manager::library', compact('corporations'));
-    }
+        $corporations = $query->get();
 
-    /**
-     * Get user's accessible corporation IDs
-     */
-    private function getUserCorporations()
-    {
-        // Get corporation IDs from user's characters via refresh_tokens and character_affiliations
-        $corporationIds = DB::table('refresh_tokens')
-            ->join('character_affiliations', 'refresh_tokens.character_id', '=', 'character_affiliations.character_id')
-            ->where('refresh_tokens.user_id', auth()->id())
-            ->whereNull('refresh_tokens.deleted_at')
-            ->pluck('character_affiliations.corporation_id')
-            ->unique()
-            ->filter()
-            ->toArray();
-        
-        return !empty($corporationIds) ? $corporationIds : null;
+        return view('blueprint-manager::library', compact('corporations'));
     }
 
     /**
@@ -76,7 +54,7 @@ class BlueprintLibraryController extends Controller
     {
         try {
             // Verify user has access to this corporation
-            $userCorpIds = $this->getUserCorporations();
+            $userCorpIds = $this->accessService->visibleCorporationIds();
             if ($userCorpIds !== null && !in_array($corporationId, $userCorpIds)) {
                 return response()->json([
                     'success' => false,
@@ -153,7 +131,7 @@ class BlueprintLibraryController extends Controller
     {
         try {
             // Verify user has access to this corporation
-            $userCorpIds = $this->getUserCorporations();
+            $userCorpIds = $this->accessService->visibleCorporationIds();
             if ($userCorpIds !== null && !in_array($corporationId, $userCorpIds)) {
                 return response()->json([
                     'success' => false,
@@ -189,7 +167,7 @@ class BlueprintLibraryController extends Controller
     {
         try {
             // Verify user has access to this corporation
-            $userCorpIds = $this->getUserCorporations();
+            $userCorpIds = $this->accessService->visibleCorporationIds();
             if ($userCorpIds !== null && !in_array($corporationId, $userCorpIds)) {
                 return response()->json([
                     'success' => false,

@@ -72,7 +72,7 @@ return [
 
     // Quick Start Guide
     'quick_start_title' => 'Quick Start Guide',
-    'quick_start_step1' => 'Install the plugin and run migrations',
+    'quick_start_step1' => 'Name your blueprint containers in-game and let SeAT sync your assets',
     'quick_start_step2' => 'Configure container patterns in Settings to organize your blueprints',
     'quick_start_step3' => 'Set up Discord/Slack webhooks for notifications (optional)',
     'quick_start_step4' => 'Configure permissions for your corporation members',
@@ -82,17 +82,10 @@ return [
     'quick_start_note_desc' => 'Blueprint data automatically syncs from SeAT\'s regular ESI updates. New blueprints and research changes appear after SeAT\'s next sync cycle.',
 
     // Getting Started Section
-    'installation' => 'Installation',
-    'installation_desc' => 'Install Blueprint Manager using Composer:',
-    'installation_command' => 'composer require mattfalahe/blueprint-manager
-php artisan migrate',
-    'installation_automatic' => 'The plugin will automatically:',
-    'installation_auto_1' => 'Register navigation menu items',
-    'installation_auto_2' => 'Create database tables',
-    'installation_auto_3' => 'Set up default permissions',
-    'installation_auto_4' => 'Begin tracking blueprints on next SeAT sync',
+    'getting_started_intro' => 'Getting Your Library Working',
+    'getting_started_intro_desc' => 'Blueprint Manager is already installed and active (that is why you can read this), it just needs a little configuration before your blueprints show up. The plugin does not pull data itself: it reads the corporation assets and blueprints SeAT already syncs. So the essentials are (1) name your blueprint containers in-game, (2) let SeAT sync, then (3) tell Blueprint Manager which containers to read, over in Settings. The steps below walk you through it.',
 
-    'initial_config' => 'Initial Configuration',
+    'initial_config' => 'Basic Configuration',
     
     'config_step1' => '1. Configure Container Patterns',
     'config_step1_desc' => 'Go to <strong>Settings</strong> and define how your blueprints are organized:',
@@ -363,6 +356,17 @@ php artisan migrate',
     'detect_setting_2' => '<strong>Per Corporation:</strong> Different settings for each corporation',
     'detect_setting_3' => '<strong>Default:</strong> All divisions if not configured',
 
+    'sharing_heading' => 'Library Sharing',
+    'sharing_desc' => 'By default, each corporation\'s blueprint library is private to its own members. Library Sharing lets a corporation open its library to others for viewing and requesting.',
+    'sharing_modes_intro' => 'Open the <strong>Library Sharing</strong> tab, pick the corporation whose library you want to control, then choose who can see it:',
+    'sharing_mode_corp' => '<strong>Only this corporation (default):</strong> Private. Only the corporation\'s own members see its library.',
+    'sharing_mode_corporations' => '<strong>Specific corporations:</strong> Pick an allowlist of corporations that may view and request.',
+    'sharing_mode_alliance' => '<strong>Alliance:</strong> Every corporation in this corporation\'s current alliance may view and request.',
+    'sharing_mode_all' => '<strong>Everyone:</strong> Anyone who can access the plugin may view and request.',
+    'sharing_save' => 'Choose a mode (and the corporations, for the allowlist), then click Save. The change takes effect immediately.',
+    'sharing_boundary' => 'Important',
+    'sharing_boundary_desc' => 'Sharing grants viewing and requesting only. Approving, rejecting and fulfilling requests, and the statistics, always stay with the owning corporation, so opening a library never hands out its request queue.',
+
     // Permissions Section
     'permission_system' => 'Permission System',
     'available_permissions' => 'Available Permissions',
@@ -445,6 +449,9 @@ php artisan migrate',
 
     'faq_12_q' => 'Can I export statistics or request data?',
     'faq_12_a' => 'Currently there\'s no built-in export function. However, all data is stored in standard database tables and can be queried directly if needed. Export functionality may be added in a future version.',
+
+    'faq_13_q' => 'Can another corporation see our blueprint library?',
+    'faq_13_a' => 'Only if you let them. Every library is private to its own corporation by default. To share one, go to <strong>Settings → Library Sharing</strong>, pick the corporation, and choose who may see it: specific corporations, your whole alliance, or everyone who can access the plugin. Sharing covers viewing and requesting only. Your managers keep sole control of approving, rejecting and fulfilling requests, and of the statistics. If someone in another corporation sees an empty library or a "no blueprints configured" message, that library simply has not been shared with them yet.',
 
     // Troubleshooting Section
     'troubleshooting_guide' => 'Troubleshooting Guide',

@@ -4,7 +4,9 @@
 @section('page_header', trans('blueprint-manager::common.settings'))
 
 @push('head')
-<link rel="stylesheet" href="{{ asset('vendor/blueprint-manager/css/blueprint-manager.css') }}">
+<link rel="stylesheet" href="{{ asset('vendor/blueprint-manager/css/select2.min.css') }}">
+<link rel="stylesheet" href="{{ asset('vendor/blueprint-manager/css/select2-bootstrap-5-theme.min.css') }}">
+<link rel="stylesheet" href="{{ asset('vendor/blueprint-manager/css/blueprint-manager.css') }}?v=3">
 @endpush
 
 
@@ -15,7 +17,16 @@
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
-            
+
+            <div class="card card-dark">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-cog"></i>
+                        {{ trans('blueprint-manager::common.settings') }}
+                    </h3>
+                </div>
+                <div class="card-body">
+
             {{-- Success/Error Messages --}}
             @if(session('success'))
             <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -45,6 +56,11 @@
                 <li class="nav-item">
                     <a class="nav-link" id="webhook-tab" data-toggle="tab" href="#webhookConfig" role="tab">
                         <i class="fab fa-discord"></i> {{ trans('blueprint-manager::common.webhooks') }}
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="sharing-tab" data-toggle="tab" href="#librarySharing" role="tab">
+                        <i class="fas fa-share-alt"></i> {{ trans('blueprint-manager::common.library_sharing') }}
                     </a>
                 </li>
             </ul>
@@ -77,7 +93,7 @@
                         </select>
                     </div>
                     <div class="col-md-6 d-flex align-items-end">
-                        <button type="button" class="btn btn-primary mr-2" id="addConfigBtn">
+                        <button type="button" class="btn btn-bp-primary mr-2" id="addConfigBtn">
                             <i class="fas fa-plus"></i> {{ trans('blueprint-manager::common.add_configuration') }}
                         </button>
                         <button type="button" class="btn btn-info" id="detectContainersBtn" disabled>
@@ -113,7 +129,7 @@
                             <button type="button" class="btn btn-sm btn-secondary" id="deselectAllHangars">
                                 <i class="fas fa-square"></i> Deselect All
                             </button>
-                            <button type="button" class="btn btn-sm btn-primary float-right" id="saveHangarSettings">
+                            <button type="button" class="btn btn-sm btn-bp-primary float-right" id="saveHangarSettings">
                                 <i class="fas fa-save"></i> Save Filter Settings
                             </button>
                         </div>
@@ -182,7 +198,7 @@
 
                 {{-- Add Webhook Button --}}
                 <div class="mb-3">
-                    <button type="button" class="btn btn-primary" id="addWebhookBtn">
+                    <button type="button" class="btn btn-bp-primary" id="addWebhookBtn">
                         <i class="fas fa-plus"></i> {{ trans('blueprint-manager::common.add_webhook') }}
                     </button>
                 </div>
@@ -215,7 +231,63 @@
             </div>
         </div> {{-- End Discord Webhooks Tab --}}
 
+        {{-- Library Sharing Tab --}}
+        <div class="tab-pane fade" id="librarySharing" role="tabpanel">
+            <div class="settings-section mt-3">
+                <h4>
+                    <i class="fas fa-share-alt"></i> {{ trans('blueprint-manager::common.library_sharing') }}
+                </h4>
+
+                <div class="info-banner">
+                    <i class="fas fa-info-circle"></i>
+                    <strong>{{ trans('blueprint-manager::common.about_library_sharing') }}</strong>
+                    {{ trans('blueprint-manager::common.library_sharing_description') }}
+                </div>
+
+                {{-- Corporation selector --}}
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="sharingCorporationSelect">{{ trans('blueprint-manager::common.select_corporation') }}</label>
+                        <select id="sharingCorporationSelect" class="form-control">
+                            <option value="">-- {{ trans('blueprint-manager::common.select_corporation') }} --</option>
+                            @foreach($corporations as $corp)
+                            <option value="{{ $corp->corporation_id }}">{{ $corp->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+
+                {{-- Visibility controls (revealed once a corp is selected) --}}
+                <div id="sharingControls" style="display: none;">
+                    <div class="form-group">
+                        <label for="visibilityMode">{{ trans('blueprint-manager::common.who_can_see') }}</label>
+                        <select id="visibilityMode" class="form-control">
+                            <option value="corp">{{ trans('blueprint-manager::common.visibility_corp') }}</option>
+                            <option value="corporations">{{ trans('blueprint-manager::common.visibility_corporations') }}</option>
+                            <option value="alliance">{{ trans('blueprint-manager::common.visibility_alliance') }}</option>
+                            <option value="all">{{ trans('blueprint-manager::common.visibility_all') }}</option>
+                        </select>
+                        <small id="visibilityModeHelp" class="form-text text-muted"></small>
+                    </div>
+
+                    <div class="form-group" id="allowlistGroup" style="display: none;">
+                        <label for="sharedCorporations">{{ trans('blueprint-manager::common.shared_corporations') }}</label>
+                        <select id="sharedCorporations" class="form-control" multiple></select>
+                        <small class="form-text text-muted">{{ trans('blueprint-manager::common.shared_corporations_help') }}</small>
+                    </div>
+
+                    <button type="button" class="btn btn-bp-primary" id="saveSharingBtn">
+                        <i class="fas fa-save"></i> {{ trans('blueprint-manager::common.save') }}
+                    </button>
+                </div>
+            </div>
+        </div> {{-- End Library Sharing Tab --}}
+
             </div> {{-- End Tab Content --}}
+
+                </div>
+            </div>
+
     </div>
 </div>
 
@@ -281,7 +353,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ trans('blueprint-manager::common.cancel') }}</button>
-                    <button type="submit" class="btn btn-primary">{{ trans('blueprint-manager::common.save') }}</button>
+                    <button type="submit" class="btn btn-bp-primary">{{ trans('blueprint-manager::common.save') }}</button>
                 </div>
             </form>
         </div>
@@ -339,7 +411,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ trans('blueprint-manager::common.cancel') }}</button>
-                    <button type="submit" class="btn btn-primary">{{ trans('blueprint-manager::common.save') }}</button>
+                    <button type="submit" class="btn btn-bp-primary">{{ trans('blueprint-manager::common.save') }}</button>
                 </div>
             </form>
         </div>
@@ -434,9 +506,15 @@
                     <div class="form-group">
                         <label>Notification Events & Role Pings</label>
                         <small class="form-text text-muted mb-2">
-                            <i class="fas fa-info-circle"></i> Configure which events trigger notifications and optionally specify Discord role IDs to ping for each event
+                            <i class="fas fa-info-circle"></i> Configure which events trigger notifications and optionally pick a Discord role to ping for each event
                         </small>
-                        
+
+                        {{-- Role provider banner (populated by JS) --}}
+                        <div id="roleProviderBanner" class="info-banner mb-2" style="display: none;">
+                            <i class="fas fa-plug"></i>
+                            <span id="roleProviderBannerText"></span>
+                        </div>
+
                         {{-- Request Created --}}
                         <div class="border rounded p-3 mb-2">
                             <div class="custom-control custom-checkbox mb-2">
@@ -446,15 +524,13 @@
                                 </label>
                             </div>
                             <div class="form-group mb-0">
-                                <label for="webhook_ping_role_created" class="small">Role ID to Ping (optional)</label>
-                                <input type="text" 
-                                       id="webhook_ping_role_created" 
-                                       name="ping_role_created" 
-                                       class="form-control form-control-sm" 
-                                       placeholder="e.g., 123456789012345678"
-                                       maxlength="50">
+                                <label for="webhook_ping_role_created" class="small">Role to Ping (optional)</label>
+                                <select id="webhook_ping_role_created"
+                                        name="ping_role_created"
+                                        class="form-control form-control-sm role-ping-select"
+                                        data-placeholder="No role (no ping)"></select>
                                 <small class="form-text text-muted">
-                                    <i class="fas fa-at"></i> Discord role ID to mention when a new request is created
+                                    <i class="fas fa-at"></i> Discord role to mention when a new request is created
                                 </small>
                             </div>
                         </div>
@@ -468,15 +544,13 @@
                                 </label>
                             </div>
                             <div class="form-group mb-0">
-                                <label for="webhook_ping_role_approved" class="small">Role ID to Ping (optional)</label>
-                                <input type="text" 
-                                       id="webhook_ping_role_approved" 
-                                       name="ping_role_approved" 
-                                       class="form-control form-control-sm" 
-                                       placeholder="e.g., 123456789012345678"
-                                       maxlength="50">
+                                <label for="webhook_ping_role_approved" class="small">Role to Ping (optional)</label>
+                                <select id="webhook_ping_role_approved"
+                                        name="ping_role_approved"
+                                        class="form-control form-control-sm role-ping-select"
+                                        data-placeholder="No role (no ping)"></select>
                                 <small class="form-text text-muted">
-                                    <i class="fas fa-at"></i> Discord role ID to mention when a request is approved
+                                    <i class="fas fa-at"></i> Discord role to mention when a request is approved
                                 </small>
                             </div>
                         </div>
@@ -490,15 +564,13 @@
                                 </label>
                             </div>
                             <div class="form-group mb-0">
-                                <label for="webhook_ping_role_rejected" class="small">Role ID to Ping (optional)</label>
-                                <input type="text" 
-                                       id="webhook_ping_role_rejected" 
-                                       name="ping_role_rejected" 
-                                       class="form-control form-control-sm" 
-                                       placeholder="e.g., 123456789012345678"
-                                       maxlength="50">
+                                <label for="webhook_ping_role_rejected" class="small">Role to Ping (optional)</label>
+                                <select id="webhook_ping_role_rejected"
+                                        name="ping_role_rejected"
+                                        class="form-control form-control-sm role-ping-select"
+                                        data-placeholder="No role (no ping)"></select>
                                 <small class="form-text text-muted">
-                                    <i class="fas fa-at"></i> Discord role ID to mention when a request is rejected
+                                    <i class="fas fa-at"></i> Discord role to mention when a request is rejected
                                 </small>
                             </div>
                         </div>
@@ -512,22 +584,21 @@
                                 </label>
                             </div>
                             <div class="form-group mb-0">
-                                <label for="webhook_ping_role_fulfilled" class="small">Role ID to Ping (optional)</label>
-                                <input type="text" 
-                                       id="webhook_ping_role_fulfilled" 
-                                       name="ping_role_fulfilled" 
-                                       class="form-control form-control-sm" 
-                                       placeholder="e.g., 123456789012345678"
-                                       maxlength="50">
+                                <label for="webhook_ping_role_fulfilled" class="small">Role to Ping (optional)</label>
+                                <select id="webhook_ping_role_fulfilled"
+                                        name="ping_role_fulfilled"
+                                        class="form-control form-control-sm role-ping-select"
+                                        data-placeholder="No role (no ping)"></select>
                                 <small class="form-text text-muted">
-                                    <i class="fas fa-at"></i> Discord role ID to mention when a request is fulfilled
+                                    <i class="fas fa-at"></i> Discord role to mention when a request is fulfilled
                                 </small>
                             </div>
                         </div>
 
                         <small class="form-text text-muted mt-2">
-                            <i class="fas fa-lightbulb"></i> <strong>Tip:</strong> To find a Discord role ID, enable Developer Mode in Discord settings, 
-                            then right-click a role and select "Copy ID". You can use the same role ID for all events or different ones for each step.
+                            <i class="fas fa-lightbulb"></i> <strong>Tip:</strong> Pick a role from the dropdown when a Discord role provider is installed.
+                            You can also type a raw role ID and press Enter (enable Developer Mode in Discord, right-click a role, "Copy ID").
+                            Leave a field empty to send that event with no ping.
                         </small>
                     </div>
 
@@ -545,7 +616,7 @@
                     <button type="button" class="btn btn-info" id="testWebhookBtn">
                         <i class="fas fa-vial"></i> {{ trans('blueprint-manager::common.test_webhook') }}
                     </button>
-                    <button type="submit" class="btn btn-primary" id="saveWebhookBtn">
+                    <button type="submit" class="btn btn-bp-primary" id="saveWebhookBtn">
                         <i class="fas fa-save"></i> {{ trans('blueprint-manager::common.save') }}
                     </button>
                 </div>
@@ -582,13 +653,14 @@
 @endsection
 
 @push('javascript')
+<script src="{{ asset('vendor/blueprint-manager/js/select2.min.js') }}"></script>
 <script>
 $(document).ready(function() {
     let configurationsTable;
     let selectedCorporationId = null;
     let divisionNames = {}; // Track loaded division names
     let checkboxStateCache = {}; // Cache for unsaved checkbox states per corporation
-    
+
     // Helper function to escape HTML
     function escapeHtml(text) {
         if (!text) return '';
@@ -601,7 +673,138 @@ $(document).ready(function() {
         };
         return text.toString().replace(/[&<>"']/g, function(m) { return map[m]; });
     }
-    
+
+    // ============================================================
+    // Discord role picker (webhook role-ping fields)
+    // ============================================================
+    const ROLE_PING_SELECTORS = [
+        '#webhook_ping_role_created',
+        '#webhook_ping_role_approved',
+        '#webhook_ping_role_rejected',
+        '#webhook_ping_role_fulfilled'
+    ];
+    let discordRoles = [];          // [{id, name, color, source, ...}]
+    let discordRolesById = {};      // id -> role
+    let discordRolesLoaded = false;
+
+    // Render a role option with a colour dot (Select2 templateResult/Selection)
+    function renderRoleOption(state) {
+        if (!state.id) {
+            return state.text; // placeholder
+        }
+        const role = discordRolesById[state.id];
+        const color = role && role.color ? role.color : '#7289da';
+        const $dot = $('<span></span>').css({
+            display: 'inline-block',
+            width: '10px',
+            height: '10px',
+            'border-radius': '50%',
+            'margin-right': '8px',
+            'background-color': color,
+            'vertical-align': 'middle'
+        });
+        const $label = $('<span></span>').css('vertical-align', 'middle').text(state.text);
+        return $('<span></span>').append($dot).append($label);
+    }
+
+    // Build the Select2 config shared by all four role fields.
+    function roleSelect2Config($el) {
+        return {
+            theme: 'bootstrap-5',
+            width: '100%',
+            dropdownParent: $('#webhookModal'),
+            placeholder: $el.data('placeholder') || 'No role (no ping)',
+            allowClear: true,
+            tags: true, // allow a raw role ID for roles not in the registry
+            templateResult: renderRoleOption,
+            templateSelection: renderRoleOption,
+            // Only accept numeric IDs as manual tags — never store a typed name
+            createTag: function (params) {
+                const term = $.trim(params.term);
+                if (term === '' || !/^\d+$/.test(term)) {
+                    return null;
+                }
+                return { id: term, text: term, _manual: true };
+            }
+        };
+    }
+
+    // Populate the <option> list for one select from the loaded roles.
+    function populateRoleSelect(selector) {
+        const $sel = $(selector);
+        // One empty option so the placeholder + allowClear work.
+        $sel.empty().append(new Option('', '', false, false));
+        discordRoles.forEach(function (role) {
+            $sel.append(new Option(role.name, role.id, false, false));
+        });
+    }
+
+    // Ensure a value is selectable, then select it (handles raw IDs that are
+    // not in the registry — e.g. legacy stored values or manual entries).
+    function setRolePingValue(selector, val) {
+        const $sel = $(selector);
+        const value = (val === null || val === undefined) ? '' : String(val);
+
+        if (value === '') {
+            $sel.val(null).trigger('change');
+            return;
+        }
+
+        if ($sel.find("option[value='" + value.replace(/'/g, "\\'") + "']").length === 0) {
+            // Unknown ID (not in the registry) — add it so it displays.
+            const label = discordRolesById[value] ? discordRolesById[value].name : value;
+            $sel.append(new Option(label, value, true, true));
+        } else {
+            $sel.val(value);
+        }
+        $sel.trigger('change');
+    }
+
+    // Initialise Select2 on all four role fields (idempotent).
+    function initRoleSelects() {
+        ROLE_PING_SELECTORS.forEach(function (selector) {
+            const $sel = $(selector);
+            if ($sel.hasClass('select2-hidden-accessible')) {
+                $sel.select2('destroy');
+            }
+            populateRoleSelect(selector);
+            $sel.select2(roleSelect2Config($sel));
+        });
+    }
+
+    // Fetch roles once and wire up the pickers.
+    function loadDiscordRoles() {
+        $.ajax({
+            url: '{{ route("blueprint-manager.settings.discord-roles") }}',
+            method: 'GET',
+            success: function (response) {
+                discordRoles = (response && response.roles) ? response.roles : [];
+                discordRolesById = {};
+                discordRoles.forEach(function (r) { discordRolesById[String(r.id)] = r; });
+
+                if (response && response.available && response.label) {
+                    $('#roleProviderBannerText').text('Roles loaded from: ' + response.label);
+                    $('#roleProviderBanner').show();
+                } else {
+                    $('#roleProviderBannerText').text('No Discord role provider detected. Type a role ID manually and press Enter.');
+                    $('#roleProviderBanner').show();
+                }
+            },
+            error: function () {
+                discordRoles = [];
+                discordRolesById = {};
+                $('#roleProviderBannerText').text('Could not load Discord roles. Type a role ID manually and press Enter.');
+                $('#roleProviderBanner').show();
+            },
+            complete: function () {
+                discordRolesLoaded = true;
+                initRoleSelects();
+            }
+        });
+    }
+
+    loadDiscordRoles();
+
     // Initialize DataTable
     configurationsTable = $('#configurationsTable').DataTable({
         order: [[4, 'desc'], [2, 'asc']], // Sort by priority desc, then category asc
@@ -1034,7 +1237,7 @@ $(document).ready(function() {
                 containersByStation[stationName].forEach(function(container) {
                     html += '<li class="list-group-item d-flex justify-content-between align-items-center">';
                     html += '<code>' + container.container_name + '</code>';
-                    html += '<button class="btn btn-sm btn-primary quick-add-config" data-container="' + container.container_name + '">';
+                    html += '<button class="btn btn-sm btn-bp-primary quick-add-config" data-container="' + container.container_name + '">';
                     html += '<i class="fas fa-plus"></i> Add Config';
                     html += '</button>';
                     html += '</li>';
@@ -1168,12 +1371,11 @@ $(document).ready(function() {
         $('#webhook_notify_fulfilled').prop('checked', true);
         $('#webhook_enabled').prop('checked', true);
         
-        // Clear all role ping fields
-        $('#webhook_ping_role_created').val('');
-        $('#webhook_ping_role_approved').val('');
-        $('#webhook_ping_role_rejected').val('');
-        $('#webhook_ping_role_fulfilled').val('');
-        
+        // Clear all role ping fields (Select2-aware)
+        ROLE_PING_SELECTORS.forEach(function (selector) {
+            $(selector).val(null).trigger('change');
+        });
+
         $('#webhookModal').modal('show');
     });
 
@@ -1194,12 +1396,13 @@ $(document).ready(function() {
             $('#webhook_notify_fulfilled').prop('checked', webhook.notify_fulfilled);
             $('#webhook_enabled').prop('checked', webhook.enabled);
             
-            // Set role ping fields
-            $('#webhook_ping_role_created').val(webhook.ping_role_created || '');
-            $('#webhook_ping_role_approved').val(webhook.ping_role_approved || '');
-            $('#webhook_ping_role_rejected').val(webhook.ping_role_rejected || '');
-            $('#webhook_ping_role_fulfilled').val(webhook.ping_role_fulfilled || '');
-            
+            // Set role ping fields (Select2-aware; adds the option if the
+            // stored ID is not in the current role registry).
+            setRolePingValue('#webhook_ping_role_created', webhook.ping_role_created);
+            setRolePingValue('#webhook_ping_role_approved', webhook.ping_role_approved);
+            setRolePingValue('#webhook_ping_role_rejected', webhook.ping_role_rejected);
+            setRolePingValue('#webhook_ping_role_fulfilled', webhook.ping_role_fulfilled);
+
             $('#webhookModal').modal('show');
         }
     });
@@ -1378,5 +1581,122 @@ $(document).ready(function() {
     }
 });
 
+</script>
+
+{{-- Library Sharing tab logic (kept in its own scope) --}}
+<script>
+$(function () {
+    var shareableLoaded = false;
+    var $shared = $('#sharedCorporations');
+
+    var modeHelp = {
+        corp:         @json(trans('blueprint-manager::common.visibility_corp_help')),
+        corporations: @json(trans('blueprint-manager::common.visibility_corporations_help')),
+        alliance:     @json(trans('blueprint-manager::common.visibility_alliance_help')),
+        all:          @json(trans('blueprint-manager::common.visibility_all_help'))
+    };
+
+    function sharingAlert(type, message) {
+        var html = '<div class="alert alert-' + type + ' alert-dismissible fade show" role="alert">' +
+            message +
+            '<button type="button" class="close" data-dismiss="alert" aria-label="Close">' +
+            '<span aria-hidden="true">&times;</span></button></div>';
+        $('#librarySharing .settings-section').prepend(html);
+    }
+
+    // Load the candidate corporations for the allowlist once, then init Select2.
+    function loadShareableCorporations(done) {
+        if (shareableLoaded) { if (done) done(); return; }
+        $.ajax({
+            url: '{{ route("blueprint-manager.settings.shareable-corporations") }}',
+            method: 'GET',
+            success: function (resp) {
+                if (resp && resp.success && resp.corporations) {
+                    resp.corporations.forEach(function (corp) {
+                        var label = corp.name + (corp.ticker ? ' [' + corp.ticker + ']' : '');
+                        $shared.append(new Option(label, corp.corporation_id, false, false));
+                    });
+                }
+                shareableLoaded = true;
+            },
+            complete: function () {
+                if (!$shared.hasClass('select2-hidden-accessible')) {
+                    $shared.select2({
+                        theme: 'bootstrap-5',
+                        width: '100%',
+                        placeholder: '{{ trans('blueprint-manager::common.shared_corporations') }}'
+                    });
+                }
+                if (done) done();
+            }
+        });
+    }
+
+    function applyMode(mode) {
+        $('#visibilityMode').val(mode);
+        $('#visibilityModeHelp').text(modeHelp[mode] || '');
+        $('#allowlistGroup').toggle(mode === 'corporations');
+    }
+
+    $('#visibilityMode').on('change', function () {
+        applyMode($(this).val());
+    });
+
+    $('#sharingCorporationSelect').on('change', function () {
+        var corpId = $(this).val();
+        if (!corpId) { $('#sharingControls').hide(); return; }
+
+        loadShareableCorporations(function () {
+            $.ajax({
+                url: '{{ route('blueprint-manager.settings.library-visibility', ['corporationId' => '__CORP_ID__']) }}'.replace('__CORP_ID__', corpId),
+                method: 'GET',
+                success: function (resp) {
+                    var mode = (resp && resp.visibility_mode) ? resp.visibility_mode : 'corp';
+                    var ids = (resp && resp.shared_corporation_ids) ? resp.shared_corporation_ids.map(String) : [];
+                    $shared.val(ids).trigger('change');
+                    applyMode(mode);
+                    $('#sharingControls').show();
+                },
+                error: function () {
+                    $shared.val([]).trigger('change');
+                    applyMode('corp');
+                    $('#sharingControls').show();
+                }
+            });
+        });
+    });
+
+    $('#saveSharingBtn').on('click', function () {
+        var corpId = $('#sharingCorporationSelect').val();
+        if (!corpId) { return; }
+
+        var mode = $('#visibilityMode').val();
+        var ids = (mode === 'corporations') ? ($shared.val() || []) : [];
+        var btn = $(this);
+        btn.prop('disabled', true);
+
+        $.ajax({
+            url: '{{ route('blueprint-manager.settings.library-visibility.save', ['corporationId' => '__CORP_ID__']) }}'.replace('__CORP_ID__', corpId),
+            method: 'POST',
+            data: {
+                _token: '{{ csrf_token() }}',
+                visibility_mode: mode,
+                shared_corporation_ids: ids
+            },
+            success: function (resp) {
+                sharingAlert(resp.success ? 'success' : 'danger', resp.message || 'Saved');
+            },
+            error: function (xhr) {
+                var msg = (xhr.responseJSON && xhr.responseJSON.message)
+                    ? xhr.responseJSON.message
+                    : 'Failed to save library sharing settings';
+                sharingAlert('danger', msg);
+            },
+            complete: function () {
+                btn.prop('disabled', false);
+            }
+        });
+    });
+});
 </script>
 @endpush

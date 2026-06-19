@@ -20,8 +20,8 @@ class ResearchProgressService
     public function getActiveResearchJobs(int $corporationId, ?array $blueprintTypeIds = null): Collection
     {
         $query = CorporationIndustryJob::where('corporation_id', $corporationId)
-            ->whereIn('activity_id', [3, 4, 5]) // Copying, ME Research, TE Research
-            ->where('status', 'active') // Show both running and waiting for delivery
+            ->whereIn('activity_id', [3, 4, 5]) // TE Research, ME Research, Copying
+            ->where('status', 'active')
             ->with(['blueprint']);
 
         if ($blueprintTypeIds) {
@@ -75,9 +75,9 @@ class ResearchProgressService
     private function getActivityName(int $activityId): string
     {
         return match($activityId) {
-            3 => 'Copying',
+            3 => 'TE Research',
             4 => 'ME Research',
-            5 => 'TE Research',
+            5 => 'Copying',
             default => 'Unknown',
         };
     }
@@ -96,9 +96,9 @@ class ResearchProgressService
         }
 
         return match($job->activity_id) {
-            3 => sprintf('Copying (%d runs)', $job->runs),
+            3 => sprintf('TE Research: %d → %d', $blueprint->time_efficiency, min($blueprint->time_efficiency + 2, 20)),
             4 => sprintf('ME Research: %d → %d', $blueprint->material_efficiency, $blueprint->material_efficiency + 1),
-            5 => sprintf('TE Research: %d → %d', $blueprint->time_efficiency, min($blueprint->time_efficiency + 2, 20)),
+            5 => sprintf('Copying (%d runs)', $job->runs),
             default => $this->getActivityName($job->activity_id),
         };
     }
@@ -171,9 +171,9 @@ class ResearchProgressService
 
         return [
             'total_jobs' => $jobs->count(),
-            'copying_jobs' => $jobs->where('activity_id', 3)->count(),
+            'te_research_jobs' => $jobs->where('activity_id', 3)->count(),
             'me_research_jobs' => $jobs->where('activity_id', 4)->count(),
-            'te_research_jobs' => $jobs->where('activity_id', 5)->count(),
+            'copying_jobs' => $jobs->where('activity_id', 5)->count(),
             'jobs_completing_today' => $jobs->filter(function ($job) {
                 return Carbon::parse($job->end_date)->isToday();
             })->count(),

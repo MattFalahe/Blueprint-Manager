@@ -6,13 +6,26 @@
 
 A comprehensive blueprint library and request management system for EVE Online corporations using SeAT. Organize your corporation's blueprints, manage member requests, track statistics, and receive Discord/Slack notifications for seamless blueprint distribution.
 
+## What's New in v2.0.0: The Ecosystem Era
+
+Blueprint Manager still runs perfectly on its own, but it now plugs into the wider plugin suite through **[Manager Core](https://github.com/MattFalahe/Manager-Core)**:
+
+- **Manager Core integration (optional, guarded).** Publishes the request lifecycle (`blueprint.request.created` / `.approved` / `.rejected` / `.fulfilled`) to the Manager Core EventBus, and exposes `blueprint.getCharacterStats` / `blueprint.getCorpSummary` through the PluginBridge. Every call is `class_exists`-guarded, so nothing changes when Manager Core is absent.
+- **HR Manager engagement.** With [HR Manager](https://github.com/MattFalahe/HR-Manager) installed, a member's blueprint requests (totals, fulfilled vs rejected, favourite types) surface on their HR profile plus a corp-wide engagement card.
+- **Main-character attribution.** Requests and management actions attribute to your SeAT main character, not whichever alt was linked most recently.
+- **Design-system refresh** to match the rest of the suite, plus a **Version Status** card in the help page that tells you when an update is available.
+- **Security & correctness hardening** (authorization scope, route gating, stored-XSS escaping, research activity-ID labels).
+
+See the [CHANGELOG](CHANGELOG.MD) for the full list. **No database migrations; standalone behaviour is unchanged.**
+
 ## Features
 
 ### 📚 Blueprint Library
 - **Pattern-Based Organization**: Configure container name patterns with wildcards to automatically categorize blueprints
 - **Custom Categories**: Group blueprints by ship class, module type, or any custom system
 - **Automatic Detection**: Scan corporation containers to quickly discover and configure blueprint locations
-- **Multi-Corporation Support**: Manage blueprints across multiple corporations
+- **Multi-Corporation Support**: Configure and manage the blueprint libraries of multiple corporations from one place
+- **Cross-Corporation Sharing**: Open a corporation's library to specific corporations, its alliance, or everyone (defaults to private; request management always stays with the owning corporation)
 - **Real-Time Data**: Automatically syncs with SeAT's ESI updates
 
 ### 📝 Request System
@@ -43,6 +56,7 @@ A comprehensive blueprint library and request management system for EVE Online c
 - **Container Detection**: Automatically scan and suggest configurations
 - **Webhook Management**: Configure multiple Discord/Slack webhooks
 - **Detection Settings**: Customize which hangars to scan per corporation
+- **Library Sharing**: Choose who can view and request from each corporation's library (private, specific corporations, alliance, or everyone)
 
 ### 🔐 Permission System
 - **View Library**: Browse available blueprints
@@ -155,8 +169,10 @@ Configure in SeAT's role management:
 
 ## Support
 
-- **Documentation**: In-app help system
+- **Documentation**: In-app help system (`Blueprint Manager → Help`)
 - **Issues**: [GitHub Issue Tracker](https://github.com/MattFalahe/blueprint-manager/issues)
+- **Discord**: [Join the SeAT community](https://discord.gg/azquy29nqs)
+- **Email**: mattfalahe@gmail.com
 - **Source**: [GitHub Repository](https://github.com/MattFalahe/blueprint-manager)
 - **Changelog**: [CHANGELOG.MD](CHANGELOG.MD)
 
@@ -174,11 +190,17 @@ Developed by **Matt Falahe** for the EVE Online community.
 
 Built for SeAT (Simple EVE API Tool) by [eveseat.github.io](https://eveseat.github.io/)
 
-## Other Plugins by Matt Falahe
+## The Plugin Suite
 
-- **[Structure Manager](https://github.com/MattFalahe/Structure-Manager)** - Comprehensive fuel tracking for Upwell structures and POSes
-- **[Corp Wallet Manager](https://github.com/MattFalahe/Corp-Wallet-Manager)** - Corporation wallet journal analysis
-- **[SeAT-Discord-Pings](https://github.com/MattFalahe/SeAT-Discord-Pings)** - Discord ping and broadcast management for SeAT 
+Blueprint Manager is part of a family of SeAT plugins that interoperate through Manager Core:
+
+- **[Manager Core](https://github.com/MattFalahe/Manager-Core)** - Optional ecosystem hub: pricing, EventBus, PluginBridge, shared SDE and ESI services
+- **[HR Manager](https://github.com/MattFalahe/HR-Manager)** - Recruitment funnel and director assessment / retention (consumes Blueprint Manager engagement data)
+- **[Mining Manager](https://github.com/MattFalahe/Mining-Manager)** - Mining tax, ledger, moon extraction and theft detection
+- **[Structure Manager](https://github.com/MattFalahe/Structure-Manager)** - Fuel tracking, timers and alerts for Upwell structures and POSes
+- **[Corp Wallet Manager](https://github.com/MattFalahe/Corp-Wallet-Manager)** - Corporation wallet analytics and predictions
+- **[Buyback Manager](https://github.com/MattFalahe/Buyback-Manager)** - Corp buyback program: appraise, offer, contract
+- **[SeAT Broadcast](https://github.com/MattFalahe/SeAT-Discord-Pings)** - Discord broadcasts, fleet calendar and FC opportunities
 
 ---
 

@@ -4,7 +4,7 @@
 @section('page_header', trans('blueprint-manager::menu.statistics'))
 
 @push('head')
-<link rel="stylesheet" href="{{ asset('vendor/blueprint-manager/css/blueprint-manager.css') }}">
+<link rel="stylesheet" href="{{ asset('vendor/blueprint-manager/css/blueprint-manager.css') }}?v=3">
 @endpush
 
 
@@ -12,7 +12,16 @@
 @section('full')
 <div class="blueprint-manager-wrapper">
 <div class="container-fluid">
-    
+
+    <div class="card card-dark">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="fas fa-chart-line"></i>
+                {{ trans('blueprint-manager::menu.statistics') }}
+            </h3>
+        </div>
+        <div class="card-body">
+
     {{-- Error Message --}}
     @if(session('error') || isset($error))
     <div class="alert alert-danger alert-dismissible fade show" role="alert">
@@ -180,6 +189,9 @@
         </table>
     </div>
 
+        </div>
+    </div>
+
 </div>
 
 <!-- Character Detail Modal -->
@@ -219,7 +231,19 @@
 @push('javascript')
 <script>
 $(document).ready(function() {
-    
+
+    function escapeHtml(text) {
+        if (text === null || text === undefined) return '';
+        const map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        };
+        return text.toString().replace(/[&<>"']/g, function(m) { return map[m]; });
+    }
+
     // Load all statistics
     function loadStatistics() {
         loadOverallStats();
@@ -279,36 +303,37 @@ $(document).ready(function() {
                 
                 data.forEach(function(char) {
                     const indicators = char.abuse_indicators.map(function(indicator) {
-                        return `<span class="abuse-indicator"><i class="fas fa-exclamation-triangle"></i> ${indicator}</span>`;
+                        return `<span class="abuse-indicator"><i class="fas fa-exclamation-triangle"></i> ${escapeHtml(indicator)}</span>`;
                     }).join('');
-                    
+
                     const indicatorCell = indicators || '<span class="text-muted">None</span>';
-                    
+                    const safeName = escapeHtml(char.character_name);
+
                     const row = `
                         <tr>
                             <td>
-                                <a href="#" class="character-link" data-character-id="${char.character_id}" data-character-name="${char.character_name}">
-                                    ${char.character_name}
+                                <a href="#" class="character-link" data-character-id="${char.character_id}" data-character-name="${safeName}">
+                                    ${safeName}
                                 </a>
                             </td>
-                            <td class="text-center">${char.total_requests}</td>
-                            <td class="text-center">${char.total_quantity.toLocaleString()}</td>
-                            <td class="text-center text-success">${char.fulfilled_count}</td>
-                            <td class="text-center text-danger">${char.rejected_count}</td>
+                            <td class="text-center">${escapeHtml(char.total_requests)}</td>
+                            <td class="text-center">${Number(char.total_quantity).toLocaleString()}</td>
+                            <td class="text-center text-success">${escapeHtml(char.fulfilled_count)}</td>
+                            <td class="text-center text-danger">${escapeHtml(char.rejected_count)}</td>
                             <td class="text-center">
                                 <span class="${char.rejection_rate > 30 ? 'text-danger' : char.rejection_rate > 15 ? 'text-warning' : 'text-success'}">
-                                    ${char.rejection_rate}%
+                                    ${escapeHtml(char.rejection_rate)}%
                                 </span>
                             </td>
                             <td class="text-center">
                                 <span class="${char.requests_per_day > 3 ? 'text-warning' : ''}">
-                                    ${char.requests_per_day}
+                                    ${escapeHtml(char.requests_per_day)}
                                 </span>
                             </td>
                             <td>${new Date(char.last_request).toLocaleDateString()}</td>
                             <td>${indicatorCell}</td>
                             <td class="text-center">
-                                <button class="btn btn-sm btn-info view-character-details" data-character-id="${char.character_id}" data-character-name="${char.character_name}">
+                                <button class="btn btn-sm btn-info view-character-details" data-character-id="${char.character_id}" data-character-name="${safeName}">
                                     <i class="fas fa-eye"></i> Details
                                 </button>
                             </td>
@@ -338,7 +363,7 @@ $(document).ready(function() {
                 tbody.append(`
                     <tr>
                         <td colspan="10" class="text-center text-danger py-4">
-                            <i class="fas fa-exclamation-triangle"></i> ${errorMessage}
+                            <i class="fas fa-exclamation-triangle"></i> ${escapeHtml(errorMessage)}
                             <br><small>Check browser console and Laravel logs for details</small>
                         </td>
                     </tr>
@@ -366,12 +391,12 @@ $(document).ready(function() {
                 data.forEach(function(bp) {
                     const row = `
                         <tr>
-                            <td>${bp.blueprint_name}</td>
-                            <td class="text-center">${bp.request_count}</td>
-                            <td class="text-center">${bp.total_quantity.toLocaleString()}</td>
-                            <td class="text-center">${bp.unique_requesters}</td>
-                            <td class="text-center text-success">${bp.fulfilled_count}</td>
-                            <td class="text-center text-danger">${bp.rejected_count}</td>
+                            <td>${escapeHtml(bp.blueprint_name)}</td>
+                            <td class="text-center">${escapeHtml(bp.request_count)}</td>
+                            <td class="text-center">${Number(bp.total_quantity).toLocaleString()}</td>
+                            <td class="text-center">${escapeHtml(bp.unique_requesters)}</td>
+                            <td class="text-center text-success">${escapeHtml(bp.fulfilled_count)}</td>
+                            <td class="text-center text-danger">${escapeHtml(bp.rejected_count)}</td>
                             <td>${new Date(bp.last_requested).toLocaleDateString()}</td>
                         </tr>
                     `;
@@ -417,16 +442,17 @@ $(document).ready(function() {
                 }
                 
                 data.forEach(function(req) {
-                    const statusBadge = `<span class="status-badge status-${req.status}">${req.status.toUpperCase()}</span>`;
+                    const safeStatus = escapeHtml(req.status);
+                    const statusBadge = `<span class="status-badge status-${safeStatus}">${safeStatus.toUpperCase()}</span>`;
                     const row = `
                         <tr>
                             <td>${new Date(req.created_at).toLocaleDateString()}</td>
-                            <td>${req.blueprint_type ? req.blueprint_type.typeName : 'Unknown'}</td>
-                            <td>${req.corporation ? req.corporation.name : 'Unknown'}</td>
-                            <td class="text-center">${req.quantity}</td>
-                            <td class="text-center">${req.runs || '-'}</td>
+                            <td>${escapeHtml(req.blueprint_type ? req.blueprint_type.typeName : 'Unknown')}</td>
+                            <td>${escapeHtml(req.corporation ? req.corporation.name : 'Unknown')}</td>
+                            <td class="text-center">${escapeHtml(req.quantity)}</td>
+                            <td class="text-center">${req.runs ? escapeHtml(req.runs) : '-'}</td>
                             <td class="text-center">${statusBadge}</td>
-                            <td>${req.notes || '-'}</td>
+                            <td>${req.notes ? escapeHtml(req.notes) : '-'}</td>
                         </tr>
                     `;
                     tbody.append(row);

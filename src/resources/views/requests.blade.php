@@ -4,7 +4,7 @@
 @section('page_header', trans('blueprint-manager::common.requests'))
 
 @push('head')
-<link rel="stylesheet" href="{{ asset('vendor/blueprint-manager/css/blueprint-manager.css') }}">
+<link rel="stylesheet" href="{{ asset('vendor/blueprint-manager/css/blueprint-manager.css') }}?v=3">
 @endpush
 
 
@@ -18,7 +18,16 @@
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
-            
+
+            <div class="card card-dark">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-inbox"></i>
+                        {{ trans('blueprint-manager::common.requests') }}
+                    </h3>
+                </div>
+                <div class="card-body">
+
             {{-- Info Banner --}}
             <div class="info-banner">
                 <i class="fas fa-info-circle"></i>
@@ -36,7 +45,7 @@
 
             {{-- Action Buttons --}}
             <div class="mb-3">
-                <button type="button" class="btn btn-primary" id="newRequestBtn">
+                <button type="button" class="btn btn-bp-primary" id="newRequestBtn">
                     <i class="fas fa-plus"></i> {{ trans('blueprint-manager::common.request_blueprint') }}
                 </button>
             </div>
@@ -104,8 +113,8 @@
                             <div class="filter-section mb-3">
                                 <label for="manageRequestsStatusFilter">{{ trans('blueprint-manager::common.filter') }}:</label>
                                 <select id="manageRequestsStatusFilter" class="form-control" style="width: 200px; display: inline-block;">
-                                    <option value="">{{ trans('blueprint-manager::common.all_status') }}</option>
-                                    <option value="pending" selected>{{ trans('blueprint-manager::common.pending') }}</option>
+                                    <option value="" selected>{{ trans('blueprint-manager::common.all_status') }}</option>
+                                    <option value="pending">{{ trans('blueprint-manager::common.pending') }}</option>
                                     <option value="approved">{{ trans('blueprint-manager::common.approved') }}</option>
                                     <option value="fulfilled">{{ trans('blueprint-manager::common.fulfilled') }}</option>
                                     <option value="rejected">{{ trans('blueprint-manager::common.rejected') }}</option>
@@ -137,6 +146,9 @@
 
             @endif
 
+                </div>
+            </div>
+
         </div>
     </div>
 </div>
@@ -165,14 +177,19 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="request_character_id">{{ trans('blueprint-manager::common.requesting_character') }} *</label>
-                        <select id="request_character_id" name="character_id" class="form-control" required>
-                            <option value="">-- Select character --</option>
-                            @foreach($userCharacters as $char)
-                            <option value="{{ $char->character_id }}">{{ $char->name }}</option>
-                            @endforeach
-                        </select>
-                        <small class="form-text text-muted">Which character is making this request?</small>
+                        <label>{{ trans('blueprint-manager::common.requesting_character') }}</label>
+                        @if(!empty($mainCharacter))
+                        <input type="text" class="form-control" value="{{ $mainCharacter->name }}" readonly>
+                        <input type="hidden" id="request_character_id" name="character_id" value="{{ $mainCharacter->character_id }}">
+                        <small class="form-text text-muted">Requests are always submitted from your SeAT main character.</small>
+                        @else
+                        <div class="alert alert-warning mb-0">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <strong>No main character set.</strong>
+                            Set a main character in your SeAT profile (top-right user menu) before submitting a blueprint request.
+                        </div>
+                        <input type="hidden" id="request_character_id" name="character_id" value="">
+                        @endif
                     </div>
 
                     <div class="form-group">
@@ -206,7 +223,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ trans('blueprint-manager::common.cancel') }}</button>
-                    <button type="submit" class="btn btn-primary">{{ trans('blueprint-manager::common.submit') }}</button>
+                    <button type="submit" class="btn btn-bp-primary">{{ trans('blueprint-manager::common.submit') }}</button>
                 </div>
             </form>
         </div>
@@ -369,6 +386,18 @@
 $(document).ready(function() {
     let myRequestsTable;
     let manageRequestsTable;
+
+    function escapeHtml(text) {
+        if (text === null || text === undefined) return '';
+        const map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        };
+        return text.toString().replace(/[&<>"']/g, function(m) { return map[m]; });
+    }
     
     // Initialize My Requests DataTable
     myRequestsTable = $('#myRequestsTable').DataTable({
@@ -403,12 +432,12 @@ $(document).ready(function() {
                 render: function(data, type, row) {
                     let html = '<div class="btn-group btn-group-sm">';
                     html += '<button class="btn btn-info btn-view-details" data-request-id="' + row.id + '"><i class="fas fa-eye"></i></button>';
-                    
+
                     // Allow deleting own pending or rejected requests
                     if (row.is_own && (row.status === 'pending' || row.status === 'rejected')) {
-                        html += '<button class="btn btn-danger btn-delete" data-request-id="' + row.id + '" data-blueprint-name="' + row.blueprint_name + '"><i class="fas fa-trash"></i></button>';
+                        html += '<button class="btn btn-danger btn-delete" data-request-id="' + row.id + '" data-blueprint-name="' + escapeHtml(row.blueprint_name) + '"><i class="fas fa-trash"></i></button>';
                     }
-                    
+
                     html += '</div>';
                     return html;
                 }
@@ -449,19 +478,21 @@ $(document).ready(function() {
             {
                 targets: 7, // Actions
                 render: function(data, type, row) {
+                    const safeName = escapeHtml(row.blueprint_name);
+                    const safeQty = escapeHtml(row.quantity);
                     let html = '<div class="btn-group btn-group-sm">';
                     html += '<button class="btn btn-info btn-view-details" data-request-id="' + row.id + '"><i class="fas fa-eye"></i></button>';
-                    
+
                     if (row.status === 'pending') {
-                        html += '<button class="btn btn-success btn-approve" data-request-id="' + row.id + '" data-blueprint-name="' + row.blueprint_name + '" data-quantity="' + row.quantity + '"><i class="fas fa-check"></i></button>';
-                        html += '<button class="btn btn-danger btn-reject" data-request-id="' + row.id + '" data-blueprint-name="' + row.blueprint_name + '"><i class="fas fa-times"></i></button>';
-                        html += '<button class="btn btn-danger btn-delete" data-request-id="' + row.id + '" data-blueprint-name="' + row.blueprint_name + '"><i class="fas fa-trash"></i></button>';
+                        html += '<button class="btn btn-success btn-approve" data-request-id="' + row.id + '" data-blueprint-name="' + safeName + '" data-quantity="' + safeQty + '"><i class="fas fa-check"></i></button>';
+                        html += '<button class="btn btn-danger btn-reject" data-request-id="' + row.id + '" data-blueprint-name="' + safeName + '"><i class="fas fa-times"></i></button>';
+                        html += '<button class="btn btn-danger btn-delete" data-request-id="' + row.id + '" data-blueprint-name="' + safeName + '"><i class="fas fa-trash"></i></button>';
                     } else if (row.status === 'approved') {
-                        html += '<button class="btn btn-success btn-fulfill" data-request-id="' + row.id + '" data-blueprint-name="' + row.blueprint_name + '" data-quantity="' + row.quantity + '"><i class="fas fa-check-double"></i></button>';
+                        html += '<button class="btn btn-success btn-fulfill" data-request-id="' + row.id + '" data-blueprint-name="' + safeName + '" data-quantity="' + safeQty + '"><i class="fas fa-check-double"></i></button>';
                     } else if (row.status === 'rejected') {
-                        html += '<button class="btn btn-danger btn-delete" data-request-id="' + row.id + '" data-blueprint-name="' + row.blueprint_name + '"><i class="fas fa-trash"></i></button>';
+                        html += '<button class="btn btn-danger btn-delete" data-request-id="' + row.id + '" data-blueprint-name="' + safeName + '"><i class="fas fa-trash"></i></button>';
                     }
-                    
+
                     html += '</div>';
                     return html;
                 }
@@ -469,8 +500,8 @@ $(document).ready(function() {
         ]
     });
     
-    // Load manage requests
-    loadManageRequests('pending');
+    // Load manage requests (all statuses by default)
+    loadManageRequests('');
     @endif
 
     // Load my requests
@@ -553,8 +584,9 @@ $(document).ready(function() {
 
     // New Request button
     $('#newRequestBtn').on('click', function() {
+        // form.reset() resets hidden #request_character_id back to its baked-in
+        // value (the user's main character_id from the blade) — exactly what we want.
         $('#newRequestForm')[0].reset();
-        $('#request_character_id').val('');
         $('#request_blueprint_type_id').prop('disabled', true).html('<option value="">-- Select corporation first --</option>');
         $('#newRequestModal').modal('show');
     });
@@ -574,7 +606,7 @@ $(document).ready(function() {
                     if (response.success) {
                         let html = '<option value="">-- Select blueprint --</option>';
                         response.blueprints.forEach(function(bp) {
-                            html += '<option value="' + bp.id + '">' + bp.text + '</option>';
+                            html += '<option value="' + escapeHtml(bp.id) + '">' + escapeHtml(bp.text) + '</option>';
                         });
                         blueprintSelect.html(html).prop('disabled', false);
                         
@@ -665,34 +697,34 @@ $(document).ready(function() {
         
         if (requestData) {
             let html = '<div class="request-details">';
-            html += '<div class="detail-row"><div class="detail-label">Corporation:</div><div class="detail-value">' + requestData.corporation_name + '</div></div>';
-            html += '<div class="detail-row"><div class="detail-label">Blueprint:</div><div class="detail-value">' + requestData.blueprint_name + '</div></div>';
-            html += '<div class="detail-row"><div class="detail-label">Requested By:</div><div class="detail-value">' + requestData.character_name + '</div></div>';
-            html += '<div class="detail-row"><div class="detail-label">Quantity:</div><div class="detail-value">' + requestData.quantity + '</div></div>';
-            html += '<div class="detail-row"><div class="detail-label">Runs:</div><div class="detail-value">' + (requestData.runs || '-') + '</div></div>';
+            html += '<div class="detail-row"><div class="detail-label">Corporation:</div><div class="detail-value">' + escapeHtml(requestData.corporation_name) + '</div></div>';
+            html += '<div class="detail-row"><div class="detail-label">Blueprint:</div><div class="detail-value">' + escapeHtml(requestData.blueprint_name) + '</div></div>';
+            html += '<div class="detail-row"><div class="detail-label">Requested By:</div><div class="detail-value">' + escapeHtml(requestData.character_name) + '</div></div>';
+            html += '<div class="detail-row"><div class="detail-label">Quantity:</div><div class="detail-value">' + escapeHtml(requestData.quantity) + '</div></div>';
+            html += '<div class="detail-row"><div class="detail-label">Runs:</div><div class="detail-value">' + (requestData.runs ? escapeHtml(requestData.runs) : '-') + '</div></div>';
             html += '<div class="detail-row"><div class="detail-label">Status:</div><div class="detail-value">' + getStatusBadge(requestData.status) + '</div></div>';
-            html += '<div class="detail-row"><div class="detail-label">Requested At:</div><div class="detail-value">' + requestData.created_at + '</div></div>';
-            
+            html += '<div class="detail-row"><div class="detail-label">Requested At:</div><div class="detail-value">' + escapeHtml(requestData.created_at) + '</div></div>';
+
             if (requestData.notes) {
-                html += '<div class="detail-row"><div class="detail-label">Notes:</div><div class="detail-value">' + requestData.notes + '</div></div>';
+                html += '<div class="detail-row"><div class="detail-label">Notes:</div><div class="detail-value">' + escapeHtml(requestData.notes) + '</div></div>';
             }
-            
+
             if (requestData.approved_by) {
-                html += '<div class="detail-row"><div class="detail-label">Approved By:</div><div class="detail-value">' + requestData.approved_by + '</div></div>';
-                html += '<div class="detail-row"><div class="detail-label">Approved At:</div><div class="detail-value">' + requestData.approved_at + '</div></div>';
+                html += '<div class="detail-row"><div class="detail-label">Approved By:</div><div class="detail-value">' + escapeHtml(requestData.approved_by) + '</div></div>';
+                html += '<div class="detail-row"><div class="detail-label">Approved At:</div><div class="detail-value">' + escapeHtml(requestData.approved_at) + '</div></div>';
             }
-            
+
             if (requestData.fulfilled_by) {
-                html += '<div class="detail-row"><div class="detail-label">Fulfilled By:</div><div class="detail-value">' + requestData.fulfilled_by + '</div></div>';
-                html += '<div class="detail-row"><div class="detail-label">Fulfilled At:</div><div class="detail-value">' + requestData.fulfilled_at + '</div></div>';
+                html += '<div class="detail-row"><div class="detail-label">Fulfilled By:</div><div class="detail-value">' + escapeHtml(requestData.fulfilled_by) + '</div></div>';
+                html += '<div class="detail-row"><div class="detail-label">Fulfilled At:</div><div class="detail-value">' + escapeHtml(requestData.fulfilled_at) + '</div></div>';
             }
-            
+
             if (requestData.response_notes) {
-                html += '<div class="detail-row"><div class="detail-label">Response Notes:</div><div class="detail-value">' + requestData.response_notes + '</div></div>';
+                html += '<div class="detail-row"><div class="detail-label">Response Notes:</div><div class="detail-value">' + escapeHtml(requestData.response_notes) + '</div></div>';
             }
-            
+
             html += '</div>';
-            
+
             $('#requestDetailsContent').html(html);
             $('#requestDetailsModal').modal('show');
         }
@@ -905,7 +937,7 @@ $(document).ready(function() {
         
         const alert = $('<div class="alert alert-' + type + ' alert-dismissible fade show" role="alert">' +
             '<i class="fas fa-' + (iconMap[type] || 'info-circle') + '"></i>' +
-            '<span>' + message + '</span>' +
+            '<span>' + escapeHtml(message) + '</span>' +
             '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>' +
             '</div>');
         

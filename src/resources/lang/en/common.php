@@ -144,4 +144,20 @@ return [
     'all_corporations_webhook' => 'All Corporations',
     'webhook_description' => 'Configure Discord webhooks to receive notifications when blueprint requests are created, approved, rejected, or fulfilled.',
     'no_webhooks' => 'No webhook configurations found',
+
+    // Library Sharing (visibility)
+    'library_sharing' => 'Library Sharing',
+    'about_library_sharing' => 'About Library Sharing:',
+    'library_sharing_description' => 'Control who, beyond the owning corporation, can view and request from a library. Request management and statistics always stay with the owning corporation, regardless of this setting.',
+    'who_can_see' => 'Who can see this library?',
+    'visibility_corp' => 'Only this corporation (private)',
+    'visibility_corporations' => 'Specific corporations',
+    'visibility_alliance' => "Everyone in this corporation's alliance",
+    'visibility_all' => 'Everyone who can access the plugin',
+    'visibility_corp_help' => 'Default. Only members of this corporation can see its library.',
+    'visibility_corporations_help' => 'Pick the corporations allowed to view and request from this library.',
+    'visibility_alliance_help' => "Any member of a corporation in this corporation's alliance can view and request.",
+    'visibility_all_help' => 'Anyone with Blueprint Manager access can view and request from this library.',
+    'shared_corporations' => 'Shared with corporations',
+    'shared_corporations_help' => 'Members of these corporations can view this library and submit requests. They cannot manage requests or see statistics.',
 ];

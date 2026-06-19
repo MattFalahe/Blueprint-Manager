@@ -20,6 +20,45 @@ class BlueprintManagerServiceProvider extends AbstractSeatPlugin
 
         // Add publications
         $this->add_publications();
+
+        // Optional Manager Core integration (capabilities for cross-plugin
+        // reads). class_exists-guarded so Blueprint Manager runs standalone.
+        $this->registerPluginBridgeCapabilities();
+    }
+
+    /**
+     * Expose read-only blueprint-request stats to other plugins (HR Manager)
+     * via the Manager Core PluginBridge. No-op when Manager Core isn't
+     * installed, so the plugin is fully standalone.
+     */
+    private function registerPluginBridgeCapabilities()
+    {
+        if (!class_exists('ManagerCore\Services\PluginBridge')) {
+            return;
+        }
+
+        try {
+            $bridge = app(\ManagerCore\Services\PluginBridge::class);
+
+            // blueprint.getCharacterStats($characterId, $corporationId)
+            //   -> per-member request engagement (counts by status, rejection
+            //      rate, favourite types). Consumers call once per character
+            //      (e.g. per alt) and aggregate.
+            $bridge->registerCapability('blueprint-manager', 'blueprint.getCharacterStats',
+                fn ($characterId, $corporationId) => app(\BlueprintManager\Services\BlueprintBridgeService::class)
+                    ->getCharacterStats((int) $characterId, (int) $corporationId)
+            );
+
+            // blueprint.getCorpSummary($corporationId)
+            //   -> corp-wide rollup: totals by status, unique requesters,
+            //      pending-backlog age, top requesters.
+            $bridge->registerCapability('blueprint-manager', 'blueprint.getCorpSummary',
+                fn ($corporationId) => app(\BlueprintManager\Services\BlueprintBridgeService::class)
+                    ->getCorpSummary((int) $corporationId)
+            );
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::warning('[Blueprint Manager] Could not register bridge capabilities: ' . $e->getMessage());
+        }
     }
 
     /**

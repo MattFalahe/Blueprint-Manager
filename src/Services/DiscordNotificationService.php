@@ -65,7 +65,12 @@ class DiscordNotificationService
             foreach ($webhooks as $webhook) {
                 try {
                     $embed = $this->buildEmbed($request, $action, $additionalData);
-                    $payload = ['embeds' => [$embed]];
+                    // Override the bot username so the message shows the plugin
+                    // name, not whatever the webhook happens to be named in Discord.
+                    $payload = [
+                        'username' => 'Blueprint Manager',
+                        'embeds' => [$embed],
+                    ];
                     
                     // Add role ping if configured for this action
                     $rolePing = $this->getRolePing($webhook, $action);

@@ -5,10 +5,18 @@ namespace BlueprintManager\Http\Controllers;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
 use BlueprintManager\Models\BlueprintRequest;
+use BlueprintManager\Services\BlueprintAccessService;
 use Carbon\Carbon;
 
 class BlueprintStatisticsController extends Controller
 {
+    protected $accessService;
+
+    public function __construct(BlueprintAccessService $accessService)
+    {
+        $this->accessService = $accessService;
+    }
+
     /**
      * Display statistics page
      */
@@ -16,7 +24,7 @@ class BlueprintStatisticsController extends Controller
     {
         try {
             // Get corporations the user has access to
-            $userCorpIds = $this->getUserCorporations();
+            $userCorpIds = $this->accessService->manageableCorporationIds();
             
             if ($userCorpIds === null) {
                 // Superadmin - get all corporations
@@ -60,7 +68,7 @@ class BlueprintStatisticsController extends Controller
     public function getOverallStats()
     {
         try {
-            $userCorpIds = $this->getUserCorporations();
+            $userCorpIds = $this->accessService->manageableCorporationIds();
             
             $query = BlueprintRequest::query();
             
@@ -109,7 +117,7 @@ class BlueprintStatisticsController extends Controller
         try {
             \Log::info('Blueprint Manager: Starting getCharacterStats()');
             
-            $userCorpIds = $this->getUserCorporations();
+            $userCorpIds = $this->accessService->manageableCorporationIds();
             \Log::info('Blueprint Manager: User corporations', ['corp_ids' => $userCorpIds]);
             
             $query = DB::table('blueprint_requests')
@@ -195,7 +203,7 @@ class BlueprintStatisticsController extends Controller
         try {
             \Log::info('Blueprint Manager: Starting getBlueprintStats()');
             
-            $userCorpIds = $this->getUserCorporations();
+            $userCorpIds = $this->accessService->manageableCorporationIds();
             
             $query = DB::table('blueprint_requests')
                 ->join('invTypes', 'blueprint_requests.blueprint_type_id', '=', 'invTypes.typeID')
@@ -238,7 +246,7 @@ class BlueprintStatisticsController extends Controller
      */
     public function getCharacterDetails($characterId)
     {
-        $userCorpIds = $this->getUserCorporations();
+        $userCorpIds = $this->accessService->manageableCorporationIds();
         
         $query = BlueprintRequest::with(['blueprintType', 'corporation'])
             ->where('character_id', $characterId);
@@ -257,7 +265,7 @@ class BlueprintStatisticsController extends Controller
      */
     public function getTimeSeriesStats($days = 30)
     {
-        $userCorpIds = $this->getUserCorporations();
+        $userCorpIds = $this->accessService->manageableCorporationIds();
         
         $startDate = Carbon::now()->subDays($days)->startOfDay();
         
@@ -288,7 +296,7 @@ class BlueprintStatisticsController extends Controller
      */
     public function getCorporationStats($corporationId)
     {
-        $userCorpIds = $this->getUserCorporations();
+        $userCorpIds = $this->accessService->manageableCorporationIds();
         
         // Check access
         if ($userCorpIds !== null && !in_array($corporationId, $userCorpIds)) {
@@ -309,50 +317,4 @@ class BlueprintStatisticsController extends Controller
         return response()->json($stats);
     }
 
-    /**
-     * Get user's accessible corporation IDs
-     */
-    private function getUserCorporations()
-    {
-        try {
-            $user = auth()->user();
-            
-            // If no authenticated user, return empty array
-            if (!$user) {
-                \Log::warning('Blueprint Manager: No authenticated user found');
-                return [];
-            }
-            
-            // Check if user is superuser/admin
-            // Handle both old and new role checking methods
-            $isSuperuser = false;
-            if (method_exists($user, 'hasRole')) {
-                $isSuperuser = $user->hasRole('Superuser') || $user->hasRole('Administrator');
-            } elseif (method_exists($user, 'isAdmin')) {
-                $isSuperuser = $user->isAdmin();
-            } elseif (property_exists($user, 'admin') && $user->admin) {
-                $isSuperuser = true;
-            }
-            
-            if ($isSuperuser) {
-                return null; // null means all corporations
-            }
-
-            $corporationIds = DB::table('refresh_tokens')
-                ->join('character_affiliations', 'refresh_tokens.character_id', '=', 'character_affiliations.character_id')
-                ->where('refresh_tokens.user_id', $user->id)
-                ->whereNull('refresh_tokens.deleted_at')
-                ->pluck('character_affiliations.corporation_id')
-                ->unique()
-                ->filter()
-                ->toArray();
-            
-            return !empty($corporationIds) ? $corporationIds : [];
-        } catch (\Exception $e) {
-            \Log::error('Blueprint Manager - Error getting user corporations: ' . $e->getMessage(), [
-                'trace' => $e->getTraceAsString()
-            ]);
-            return [];
-        }
-    }
 }

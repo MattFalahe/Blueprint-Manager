@@ -7,7 +7,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use BlueprintManager\Models\BlueprintContainerConfig;
 use BlueprintManager\Models\BlueprintDetectionSettings;
+use BlueprintManager\Models\BlueprintLibraryVisibility;
 use BlueprintManager\Services\BlueprintService;
+use BlueprintManager\Services\DiscordRoleResolver;
 
 class BlueprintSettingsController extends Controller
 {
@@ -65,7 +67,7 @@ class BlueprintSettingsController extends Controller
             $validated = $request->validate([
                 'corporation_id' => 'required|integer',
                 'container_name' => 'required|string|max:255',
-                'match_type' => 'required|in:exact,contains,starts_with,ends_with,regex',
+                'match_type' => 'required|in:exact,contains,starts_with',
                 'display_category' => 'required|string|max:100',
                 'enabled' => 'boolean',
                 'priority' => 'integer|min:0|max:100',
@@ -116,7 +118,7 @@ class BlueprintSettingsController extends Controller
 
             $validated = $request->validate([
                 'container_name' => 'sometimes|string|max:255',
-                'match_type' => 'sometimes|in:exact,contains,starts_with,ends_with,regex',
+                'match_type' => 'sometimes|in:exact,contains,starts_with',
                 'display_category' => 'sometimes|string|max:100',
                 'enabled' => 'boolean',
                 'priority' => 'integer|min:0|max:100',
@@ -317,6 +319,37 @@ class BlueprintSettingsController extends Controller
     }
 
     /**
+     * Get available Discord roles for the webhook role-ping picker (AJAX).
+     *
+     * Unions every installed Discord role provider (SeAT Broadcast's
+     * discord_roles, warlof seat_connector_sets, legacy warlof tables).
+     * Returns available=false when none are installed, so the UI falls back
+     * to plain manual ID entry.
+     */
+    public function getDiscordRoles()
+    {
+        try {
+            return response()->json([
+                'success'   => true,
+                'available' => DiscordRoleResolver::isAvailable(),
+                'label'     => DiscordRoleResolver::providerLabel(),
+                'roles'     => DiscordRoleResolver::listRoles(),
+            ]);
+        } catch (\Exception $e) {
+            // Never break the settings page over a role-provider hiccup —
+            // degrade to manual entry.
+            \Log::warning('Blueprint Manager - Error listing Discord roles: ' . $e->getMessage());
+
+            return response()->json([
+                'success'   => false,
+                'available' => false,
+                'label'     => 'Manual input only',
+                'roles'     => [],
+            ]);
+        }
+    }
+
+    /**
      * Get webhook configurations
      */
     public function getWebhookConfigs()
@@ -467,6 +500,7 @@ class BlueprintSettingsController extends Controller
             ]);
 
             $response = \Illuminate\Support\Facades\Http::timeout(10)->post($validated['webhook_url'], [
+                'username' => 'Blueprint Manager',
                 'embeds' => [[
                     'title' => '🧪 Blueprint Manager Webhook Test',
                     'description' => 'This is a test notification from Blueprint Manager. If you see this, your webhook is configured correctly!',
@@ -494,6 +528,106 @@ class BlueprintSettingsController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Webhook test failed: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get the library visibility setting for a corporation (AJAX).
+     *
+     * Falls back to the private default ('corp') when the corporation has no
+     * row yet, so the UI always has something sensible to show.
+     */
+    public function getLibraryVisibility($corporationId)
+    {
+        try {
+            $row = BlueprintLibraryVisibility::where('corporation_id', $corporationId)->first();
+
+            return response()->json([
+                'success' => true,
+                'visibility_mode' => $row->visibility_mode ?? BlueprintLibraryVisibility::MODE_CORP,
+                'shared_corporation_ids' => ($row && is_array($row->shared_corporation_ids))
+                    ? array_values($row->shared_corporation_ids)
+                    : [],
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load library visibility: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Save the library visibility setting for a corporation (AJAX).
+     *
+     * The allowlist is only persisted for the 'corporations' mode; every other
+     * mode stores null so a later switch back to 'corp' leaves no stale list.
+     */
+    public function saveLibraryVisibility(Request $request, $corporationId)
+    {
+        try {
+            $validated = $request->validate([
+                'visibility_mode' => 'required|in:' . implode(',', BlueprintLibraryVisibility::MODES),
+                'shared_corporation_ids' => 'nullable|array',
+                'shared_corporation_ids.*' => 'integer',
+            ]);
+
+            $sharedIds = null;
+            if ($validated['visibility_mode'] === BlueprintLibraryVisibility::MODE_CORPORATIONS) {
+                $sharedIds = array_values(array_unique(array_map(
+                    'intval',
+                    $validated['shared_corporation_ids'] ?? []
+                )));
+            }
+
+            BlueprintLibraryVisibility::updateOrCreate(
+                ['corporation_id' => $corporationId],
+                [
+                    'visibility_mode' => $validated['visibility_mode'],
+                    'shared_corporation_ids' => $sharedIds,
+                ]
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Library sharing settings saved successfully'
+            ]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to save library sharing settings: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * List every corporation known to SeAT for the sharing allowlist picker
+     * (AJAX). These are the candidate corps a library can be shared *to*.
+     */
+    public function getShareableCorporations()
+    {
+        try {
+            $corporations = DB::table('corporation_infos')
+                ->select('corporation_id', 'name', 'ticker')
+                ->orderBy('name')
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'corporations' => $corporations,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load corporations: ' . $e->getMessage()
             ], 500);
         }
     }

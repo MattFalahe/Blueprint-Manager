@@ -4,83 +4,74 @@
 @section('page_header', trans('blueprint-manager::help.help_documentation'))
 
 @push('head')
+<link rel="stylesheet" href="{{ asset('vendor/blueprint-manager/css/blueprint-manager.css') }}?v=3">
 <style>
-    .help-wrapper { display: flex; gap: 20px; }
-    .help-sidebar { flex: 0 0 280px; position: sticky; top: 20px; max-height: calc(100vh - 120px); overflow-y: auto; }
-    .help-content { flex: 1; min-width: 0; }
-    .help-nav .nav-link { color: #e2e8f0; border-radius: 5px; margin-bottom: 5px; padding: 10px 15px; transition: all 0.3s; font-size: 0.95rem; }
-    .help-nav .nav-link:hover { background: rgba(23, 162, 184, 0.2); }
-    .help-nav .nav-link.active { background: linear-gradient(135deg, #17a2b8 0%, #138496 100%); }
-    .help-nav .nav-link i { width: 24px; text-align: center; margin-right: 10px; }
-    .help-section { display: none; animation: fadeIn 0.3s; }
-    .help-section.active { display: block; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-    .help-card { background: #2d3748; border-radius: 10px; padding: 25px; margin-bottom: 20px; border: 1px solid rgba(23, 162, 184, 0.2); }
-    .help-card h3 { color: #17a2b8; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
-    .help-card h4 { color: #9ca3af; margin-top: 20px; margin-bottom: 10px; font-size: 1.1rem; }
-    .help-card h5 { color: #9ca3af; margin-top: 15px; margin-bottom: 8px; font-size: 1rem; }
-    .help-card p { color: #d1d5db; line-height: 1.6; margin-bottom: 1rem; }
-    .help-card ul, .help-card ol { color: #d1d5db; line-height: 1.8; margin: 15px 0; padding-left: 25px; }
-    .help-card ul li, .help-card ol li { margin-bottom: 8px; }
-    .help-card code { background: rgba(0, 0, 0, 0.3); padding: 2px 8px; border-radius: 4px; color: #f56565; font-family: 'Courier New', monospace; }
-    .help-card pre { background: rgba(0, 0, 0, 0.3); padding: 15px; border-radius: 8px; border-left: 4px solid #17a2b8; overflow-x: auto; margin: 15px 0; }
-    .help-card pre code { background: none; padding: 0; color: #d1d5db; }
-    .info-box { background: rgba(23, 162, 184, 0.15); border-left: 4px solid #17a2b8; padding: 15px; margin: 15px 0; border-radius: 5px; color: #d1d5db; line-height: 1.6; }
-    .info-box i { margin-right: 8px; vertical-align: middle; }
-    .warning-box { background: rgba(251, 191, 36, 0.15); border-left: 4px solid #fbbf24; padding: 15px; margin: 15px 0; border-radius: 5px; color: #d1d5db; line-height: 1.6; }
-    .warning-box i { margin-right: 8px; vertical-align: middle; }
-    .success-box { background: rgba(28, 200, 138, 0.15); border-left: 4px solid #1cc88a; padding: 15px; margin: 15px 0; border-radius: 5px; color: #d1d5db; line-height: 1.6; }
-    .success-box i { margin-right: 8px; vertical-align: middle; }
-    .purple-box { background: rgba(156, 39, 176, 0.15); border-left: 4px solid #9c27b0; padding: 15px; margin: 15px 0; border-radius: 5px; color: #d1d5db; line-height: 1.6; }
-    .purple-box i { margin-right: 8px; vertical-align: middle; }
-    .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin: 20px 0; }
-    .feature-item { background: rgba(23, 162, 184, 0.1); padding: 15px; border-radius: 8px; border: 1px solid rgba(23, 162, 184, 0.3); }
-    .feature-item i { font-size: 2rem; color: #17a2b8; margin-bottom: 10px; }
-    .feature-item h5 { color: #e2e8f0; margin-bottom: 8px; }
-    .feature-item p { color: #9ca3af; font-size: 0.9rem; margin: 0; }
-    .search-box { position: relative; margin-bottom: 20px; }
-    .search-box input { width: 100%; padding: 12px 45px 12px 15px; background: #2d3748; border: 1px solid rgba(23, 162, 184, 0.3); border-radius: 8px; color: #e2e8f0; }
-    .search-box i { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: #9ca3af; }
-    .faq-item { background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; margin-bottom: 15px; overflow: hidden; transition: all 0.3s; }
-    .faq-item:hover { border-color: rgba(23, 162, 184, 0.3); }
-    .faq-question { padding: 15px 20px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none; }
-    .faq-question:hover { background: rgba(23, 162, 184, 0.1); }
-    .faq-question i { transition: transform 0.3s; }
-    .faq-item.open .faq-question i { transform: rotate(180deg); }
-    .faq-answer { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; padding: 0 20px; }
-    .faq-item.open .faq-answer { max-height: 500px; padding: 0 20px 20px; }
-    .plugin-info { background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%); border: 1px solid rgba(23, 162, 184, 0.3); border-radius: 10px; padding: 20px; margin-bottom: 20px; }
-    .plugin-info .info-row { color: #9ca3af; margin: 5px 0; }
-    .plugin-info .author { color: #17a2b8; margin: 10px 0; }
-    .plugin-links { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-top: 15px; }
-    .plugin-link { background: rgba(23, 162, 184, 0.1); padding: 10px; border-radius: 5px; border: 1px solid rgba(23, 162, 184, 0.3); color: #17a2b8; text-decoration: none; display: flex; align-items: center; gap: 10px; transition: all 0.3s; }
-    .plugin-link:hover { background: rgba(23, 162, 184, 0.2); color: #40d3ff; text-decoration: none; transform: translateX(5px); }
-    .quick-links { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin: 20px 0; }
-    .quick-link { background: linear-gradient(135deg, #17a2b8 0%, #138496 100%); padding: 15px; border-radius: 8px; text-align: center; color: white; text-decoration: none; transition: transform 0.2s, box-shadow 0.2s; display: flex; align-items: center; justify-content: center; gap: 10px; }
-    .quick-link:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(23, 162, 184, 0.4); color: white; text-decoration: none; }
-    @media (max-width: 768px) { .help-wrapper { flex-direction: column; } .help-sidebar { position: static; flex: 1; max-height: none; } }
+    /* "What's new" — green-accented, list form. Scoped + !important so a
+       custom SeAT theme can't wash out the green or the text contrast. */
+    .blueprint-manager-wrapper .whats-new-card { border-left: 4px solid #28a745 !important; }
+    .blueprint-manager-wrapper .whats-new-card h3 { color: #28a745 !important; }
+    .blueprint-manager-wrapper .whats-new-list { list-style: none; padding-left: 0; margin: 14px 0 0 0; }
+    .blueprint-manager-wrapper .whats-new-list li {
+        position: relative; padding: 9px 0 9px 30px; line-height: 1.5;
+        color: #d1d5db !important; border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .blueprint-manager-wrapper .whats-new-list li:last-child { border-bottom: none; }
+    .blueprint-manager-wrapper .whats-new-list li > i { position: absolute; left: 0; top: 11px; color: #28a745 !important; }
+    .blueprint-manager-wrapper .whats-new-list li strong { color: #e2e8f0 !important; }
+    .blueprint-manager-wrapper .whats-new-list li code { color: #fbbf24 !important; }
 </style>
 @endpush
 
-@section('content')
+@section('full')
+<div class="blueprint-manager-wrapper">
 <div class="help-wrapper">
     <div class="help-sidebar">
-        <div class="search-box">
-            <input type="text" id="helpSearch" placeholder="{{ trans('blueprint-manager::help.search_placeholder') }}">
-            <i class="fas fa-search"></i>
+        <div class="card card-dark">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-compass"></i>
+                    Navigation
+                </h3>
+            </div>
+            <div class="card-body p-0">
+                <div class="search-box">
+                    <input type="text" id="helpSearch" placeholder="{{ trans('blueprint-manager::help.search_placeholder') }}">
+                    <i class="fas fa-search"></i>
+                </div>
+                <ul class="nav nav-pills flex-column help-nav">
+                    <li class="nav-item">
+                        <a href="#" class="nav-link active" data-section="overview"><i class="fas fa-home"></i> {{ trans('blueprint-manager::help.overview') }}</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link" data-section="getting-started"><i class="fas fa-rocket"></i> {{ trans('blueprint-manager::help.getting_started') }}</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link" data-section="features"><i class="fas fa-star"></i> {{ trans('blueprint-manager::help.features') }}</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link" data-section="library"><i class="fas fa-book"></i> {{ trans('blueprint-manager::help.library') }}</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link" data-section="requests"><i class="fas fa-paper-plane"></i> {{ trans('blueprint-manager::help.requests') }}</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link" data-section="statistics"><i class="fas fa-chart-line"></i> {{ trans('blueprint-manager::help.statistics') }}</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link" data-section="settings"><i class="fas fa-cog"></i> {{ trans('blueprint-manager::help.settings') }}</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link" data-section="permissions"><i class="fas fa-shield-alt"></i> {{ trans('blueprint-manager::help.permissions') }}</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link" data-section="faq"><i class="fas fa-question-circle"></i> {{ trans('blueprint-manager::help.faq') }}</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link" data-section="troubleshooting"><i class="fas fa-wrench"></i> {{ trans('blueprint-manager::help.troubleshooting') }}</a>
+                    </li>
+                </ul>
+            </div>
         </div>
-        <nav class="help-nav">
-            <a href="#" class="nav-link active" data-section="overview"><i class="fas fa-home"></i> {{ trans('blueprint-manager::help.overview') }}</a>
-            <a href="#" class="nav-link" data-section="getting-started"><i class="fas fa-rocket"></i> {{ trans('blueprint-manager::help.getting_started') }}</a>
-            <a href="#" class="nav-link" data-section="features"><i class="fas fa-star"></i> {{ trans('blueprint-manager::help.features') }}</a>
-            <a href="#" class="nav-link" data-section="library"><i class="fas fa-book"></i> {{ trans('blueprint-manager::help.library') }}</a>
-            <a href="#" class="nav-link" data-section="requests"><i class="fas fa-paper-plane"></i> {{ trans('blueprint-manager::help.requests') }}</a>
-            <a href="#" class="nav-link" data-section="statistics"><i class="fas fa-chart-line"></i> {{ trans('blueprint-manager::help.statistics') }}</a>
-            <a href="#" class="nav-link" data-section="settings"><i class="fas fa-cog"></i> {{ trans('blueprint-manager::help.settings') }}</a>
-            <a href="#" class="nav-link" data-section="permissions"><i class="fas fa-shield-alt"></i> {{ trans('blueprint-manager::help.permissions') }}</a>
-            <a href="#" class="nav-link" data-section="faq"><i class="fas fa-question-circle"></i> {{ trans('blueprint-manager::help.faq') }}</a>
-            <a href="#" class="nav-link" data-section="troubleshooting"><i class="fas fa-wrench"></i> {{ trans('blueprint-manager::help.troubleshooting') }}</a>
-        </nav>
     </div>
     
     <div class="help-content">
@@ -88,7 +79,7 @@
         <div id="overview" class="help-section active">
             <div class="plugin-info">
                 <h3 style="color: #17a2b8; margin-bottom: 15px;"><i class="fas fa-info-circle"></i> {{ trans('blueprint-manager::help.plugin_info_title') }}</h3>
-                <div class="info-row"><strong>{{ trans('blueprint-manager::help.version') }}:</strong> <img src="https://img.shields.io/github/v/release/MattFalahe/blueprint-manager" alt="Version" style="vertical-align: middle;"> <img src="https://img.shields.io/badge/SeAT-5.0-green" alt="SeAT" style="vertical-align: middle;"></div>
+                <div class="info-row"><strong>{{ trans('blueprint-manager::help.version') }}:</strong> <img src="https://img.shields.io/packagist/v/mattfalahe/blueprint-manager?label=release&color=667eea" alt="Latest release" style="vertical-align: middle;"> <img src="https://img.shields.io/badge/SeAT-5.x-blue" alt="SeAT" style="vertical-align: middle;"></div>
                 <div class="info-row"><strong>{{ trans('blueprint-manager::help.license') }}:</strong> GPL-2.0</div>
                 
                 <div class="author">
@@ -111,9 +102,95 @@
                 </div>
             </div>
 
+            {{-- Version Status — installed vs latest on Packagist. VersionChecker
+                 handles caching, fallbacks, dev-branch awareness; the badge
+                 colour/label keys off the resolved status. --}}
+            @php
+                $vs = $versionStatus ?? ['current' => '?', 'current_source' => 'config', 'is_dev_branch' => false, 'latest' => null, 'status' => 'unknown', 'message' => '', 'release_url' => null];
+                $statusBadgeClass = [
+                    'current'    => 'badge-success',
+                    'outdated'   => 'badge-warning',
+                    'ahead'      => 'badge-info',
+                    'dev_branch' => 'badge-info',
+                    'unknown'    => 'badge-secondary',
+                ][$vs['status']] ?? 'badge-secondary';
+                $statusLabel = [
+                    'current'    => '✓ Up to date',
+                    'outdated'   => '⚠ Update available',
+                    'ahead'      => '🚀 Pre-release',
+                    'dev_branch' => '🌱 Development branch',
+                    'unknown'    => 'Unable to check',
+                ][$vs['status']] ?? 'Unknown';
+                $installedDisplay = $vs['is_dev_branch'] ? $vs['current'] : ('v' . $vs['current']);
+                $sourceHint = $vs['current_source'] === 'composer'
+                    ? "resolved via Composer's installed.json"
+                    : 'resolved via blueprint-manager.config.php (fallback, Composer metadata unavailable)';
+            @endphp
+            <div class="help-card">
+                <h3><i class="fas fa-tag"></i> Version status</h3>
+                <div style="display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; margin: 0.5rem 0;">
+                    <div>
+                        <strong>Installed:</strong>
+                        <span class="badge badge-secondary" style="font-size: 0.9rem;" title="{{ $sourceHint }}">{{ $installedDisplay }}</span>
+                    </div>
+                    <div>
+                        <strong>Latest release:</strong>
+                        @if($vs['latest'])
+                            <span class="badge badge-secondary" style="font-size: 0.9rem;">v{{ $vs['latest'] }}</span>
+                        @else
+                            <span class="badge badge-secondary" style="font-size: 0.9rem;">unknown</span>
+                        @endif
+                    </div>
+                    <div>
+                        <span class="badge {{ $statusBadgeClass }}" style="font-size: 0.9rem;">{{ $statusLabel }}</span>
+                    </div>
+                    @if($vs['release_url'])
+                        <div>
+                            <a href="{{ $vs['release_url'] }}" target="_blank" rel="noopener" class="btn btn-sm btn-bp-primary">
+                                <i class="fas fa-external-link-alt"></i> Release notes
+                            </a>
+                        </div>
+                    @endif
+                </div>
+                <small class="text-muted">{{ $vs['message'] }}</small>
+                @if($vs['status'] === 'outdated')
+                    <div class="info-box" style="margin-top: 0.75rem;">
+                        <i class="fas fa-arrow-circle-up"></i>
+                        <strong>Upgrade:</strong>
+                        <pre style="margin-top: 0.4rem; margin-bottom: 0;"><code>docker compose -f docker-compose.yml -f docker-compose.mariadb.yml -f docker-compose.traefik.yml down
+docker compose -f docker-compose.yml -f docker-compose.mariadb.yml -f docker-compose.traefik.yml up -d</code></pre>
+                        <small class="text-muted" style="display: block; margin-top: 0.4rem;">SeAT pulls the new composer package and runs migrations automatically on restart.</small>
+                    </div>
+                @endif
+                <small class="text-muted" style="display: block; margin-top: 0.4rem; font-size: 0.75rem;">
+                    <i class="fas fa-info-circle"></i>
+                    Checked against Packagist, cached for 6 hours. Informational only; the plugin never blocks on it.
+                </small>
+            </div>
+
             <div class="help-card">
                 <h3><i class="fas fa-rocket"></i> {{ trans('blueprint-manager::help.welcome_title') }}</h3>
                 <p class="lead">{{ trans('blueprint-manager::help.welcome_desc') }}</p>
+            </div>
+
+            {{-- What's New in v2.0.0 — major release highlight (Overview card #4). --}}
+            <div class="help-card whats-new-card">
+                <h3><i class="fas fa-gift"></i> What's new in v2.0.0: The Ecosystem Era</h3>
+                <p>Blueprint Manager joins the wider plugin suite. It still runs perfectly on its own, but when <strong>Manager Core</strong> is installed it now plugs into the shared ecosystem so other plugins can build on its data.</p>
+                <ul class="whats-new-list">
+                    <li><i class="fas fa-check-circle"></i> <strong>Manager Core integration.</strong> Publishes the request lifecycle (created / approved / rejected / fulfilled) to the EventBus and exposes per-member and per-corp request stats through the PluginBridge. Optional and guarded, so nothing changes when Manager Core is absent.</li>
+                    <li><i class="fas fa-check-circle"></i> <strong>HR Manager engagement.</strong> With HR Manager installed, a member's blueprint requests (volume, fulfilled vs rejected, favourite types) surface on their HR profile and a corp-wide engagement card, turning the request ledger into a retention signal.</li>
+                    <li><i class="fas fa-check-circle"></i> <strong>Design-system refresh.</strong> The whole plugin now wears the shared suite chrome (cards, badges, tables, buttons) so it looks at home next to the other managers.</li>
+                    <li><i class="fas fa-check-circle"></i> <strong>Main-character attribution.</strong> Requests and management actions attribute to your SeAT main character, so "requested / approved / fulfilled by" always shows the recognised identity rather than a recently-linked alt.</li>
+                    <li><i class="fas fa-check-circle"></i> <strong>Security &amp; correctness hardening.</strong> Closed an authorization-scope gap for accounts with no linked characters, gated the detection-settings routes, escaped user-supplied text in the request/library/statistics views, and corrected the research activity-ID labels.</li>
+                    <li><i class="fas fa-check-circle"></i> <strong>Diagnostic dashboard.</strong> A new admin-only diagnostics page (<code>/blueprint-manager/diagnostic</code>) with health checks, system validation, data-integrity checks, a webhook tester and a per-request trace.</li>
+                    <li><i class="fas fa-check-circle"></i> <strong>Version status + docs.</strong> The Version Status card now tells you when an update is available, and the help and README follow the same standards as the rest of the suite.</li>
+                </ul>
+                <div class="success-box" style="margin-top: 15px;">
+                    <i class="fas fa-balance-scale"></i>
+                    <strong>Standalone first:</strong>
+                    Every ecosystem feature is opt-in and degrades cleanly. Without Manager Core, Blueprint Manager behaves exactly as it did in v1.0.x. The integration is a bonus layer, never a dependency.
+                </div>
             </div>
 
             <div class="help-card">
@@ -162,16 +239,8 @@
         {{-- Getting Started --}}
         <div id="getting-started" class="help-section">
             <div class="help-card">
-                <h3><i class="fas fa-download"></i> {{ trans('blueprint-manager::help.installation') }}</h3>
-                <p>{{ trans('blueprint-manager::help.installation_desc') }}</p>
-                <pre><code>{{ trans('blueprint-manager::help.installation_command') }}</code></pre>
-                <p>{{ trans('blueprint-manager::help.installation_automatic') }}</p>
-                <ul>
-                    <li>{{ trans('blueprint-manager::help.installation_auto_1') }}</li>
-                    <li>{{ trans('blueprint-manager::help.installation_auto_2') }}</li>
-                    <li>{{ trans('blueprint-manager::help.installation_auto_3') }}</li>
-                    <li>{{ trans('blueprint-manager::help.installation_auto_4') }}</li>
-                </ul>
+                <h3><i class="fas fa-rocket"></i> {{ trans('blueprint-manager::help.getting_started_intro') }}</h3>
+                <p>{{ trans('blueprint-manager::help.getting_started_intro_desc') }}</p>
             </div>
             <div class="help-card">
                 <h3><i class="fas fa-cog"></i> {{ trans('blueprint-manager::help.initial_config') }}</h3>
@@ -489,6 +558,17 @@
                     <li>{!! trans('blueprint-manager::help.detect_setting_2') !!}</li>
                     <li>{!! trans('blueprint-manager::help.detect_setting_3') !!}</li>
                 </ul>
+                <h4>{{ trans('blueprint-manager::help.sharing_heading') }}</h4>
+                <p>{{ trans('blueprint-manager::help.sharing_desc') }}</p>
+                <p>{!! trans('blueprint-manager::help.sharing_modes_intro') !!}</p>
+                <ul>
+                    <li>{!! trans('blueprint-manager::help.sharing_mode_corp') !!}</li>
+                    <li>{!! trans('blueprint-manager::help.sharing_mode_corporations') !!}</li>
+                    <li>{!! trans('blueprint-manager::help.sharing_mode_alliance') !!}</li>
+                    <li>{!! trans('blueprint-manager::help.sharing_mode_all') !!}</li>
+                </ul>
+                <p>{{ trans('blueprint-manager::help.sharing_save') }}</p>
+                <div class="warning-box"><i class="fas fa-exclamation-triangle"></i><strong>{{ trans('blueprint-manager::help.sharing_boundary') }}:</strong> {{ trans('blueprint-manager::help.sharing_boundary_desc') }}</div>
             </div>
         </div>
 
@@ -556,7 +636,7 @@
         <div id="faq" class="help-section">
             <div class="help-card">
                 <h3><i class="fas fa-question-circle"></i> {{ trans('blueprint-manager::help.faq_title') }}</h3>
-                @foreach(range(1, 12) as $i)
+                @foreach(range(1, 13) as $i)
                 <div class="faq-item">
                     <div class="faq-question">
                         <span>{{ trans('blueprint-manager::help.faq_'.$i.'_q') }}</span>
@@ -574,6 +654,16 @@
         <div id="troubleshooting" class="help-section">
             <div class="help-card">
                 <h3><i class="fas fa-wrench"></i> {{ trans('blueprint-manager::help.troubleshooting_guide') }}</h3>
+
+                <div class="info-box">
+                    <i class="fas fa-stethoscope"></i>
+                    <strong>Diagnostics page:</strong>
+                    Administrators (with the Settings permission) can open the diagnostic dashboard at
+                    <code>/blueprint-manager/diagnostic</code> for live health checks, system validation,
+                    data-integrity checks, a webhook tester, and a per-request trace. It is deliberately not
+                    in the sidebar; reach it by URL. Start there whenever something looks off.
+                </div>
+
                 <h4>{{ trans('blueprint-manager::help.trouble_no_blueprints') }}</h4>
                 <div class="purple-box"><strong>{{ trans('blueprint-manager::help.symptom') }}:</strong> {{ trans('blueprint-manager::help.symptom_no_bp') }}</div>
                 <p><strong>{{ trans('blueprint-manager::help.possible_causes') }}</strong></p>
@@ -659,6 +749,7 @@
             </div>
         </div>
     </div>
+</div>
 </div>
 @endsection
 

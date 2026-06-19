@@ -161,13 +161,20 @@ Route::group([
     Route::get('/settings/detection-settings/{corporationId}', [
         'uses' => 'BlueprintSettingsController@getDetectionSettings',
         'as' => 'blueprint-manager.settings.detection-settings',
-        'middleware' => ['web', 'auth'],
+        'middleware' => 'can:blueprint-manager.settings',
     ]);
-    
+
     Route::post('/settings/detection-settings/{corporationId}', [
         'uses' => 'BlueprintSettingsController@saveDetectionSettings',
         'as' => 'blueprint-manager.settings.save-detection-settings',
-        'middleware' => ['web', 'auth'],
+        'middleware' => 'can:blueprint-manager.settings',
+    ]);
+
+    // Discord role picker (AJAX) — unions installed Discord role providers
+    Route::get('/settings/discord-roles', [
+        'as' => 'blueprint-manager.settings.discord-roles',
+        'uses' => 'BlueprintSettingsController@getDiscordRoles',
+        'middleware' => 'can:blueprint-manager.settings',
     ]);
 
     // Webhook Configuration Routes
@@ -201,10 +208,38 @@ Route::group([
         'middleware' => 'can:blueprint-manager.settings',
     ]);
 
+    // Library Sharing (visibility) Routes
+    Route::get('/settings/shareable-corporations', [
+        'as' => 'blueprint-manager.settings.shareable-corporations',
+        'uses' => 'BlueprintSettingsController@getShareableCorporations',
+        'middleware' => 'can:blueprint-manager.settings',
+    ]);
+
+    Route::get('/settings/library-visibility/{corporationId}', [
+        'as' => 'blueprint-manager.settings.library-visibility',
+        'uses' => 'BlueprintSettingsController@getLibraryVisibility',
+        'middleware' => 'can:blueprint-manager.settings',
+    ]);
+
+    Route::post('/settings/library-visibility/{corporationId}', [
+        'as' => 'blueprint-manager.settings.library-visibility.save',
+        'uses' => 'BlueprintSettingsController@saveLibraryVisibility',
+        'middleware' => 'can:blueprint-manager.settings',
+    ]);
+
     // Help & Documentation Route
     Route::get('/help', [
         'as' => 'blueprint-manager.help',
         'uses' => 'BlueprintHelpController@index',
         'middleware' => 'can:blueprint-manager.view',
+    ]);
+
+    // Diagnostic dashboard — admin-only, deliberately NOT in the sidebar.
+    // Reach via /blueprint-manager/diagnostic. Gated on the settings tier
+    // (Blueprint Manager's admin-equivalent permission).
+    Route::get('/diagnostic', [
+        'as' => 'blueprint-manager.diagnostic',
+        'uses' => 'BlueprintDiagnosticController@index',
+        'middleware' => 'can:blueprint-manager.settings',
     ]);
 });
