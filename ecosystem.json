@@ -1,0 +1,12 @@
+{
+    "plugin": "blueprint-manager",
+    "manager_core": { "relation": "optional", "minimum": "1.1.0" },
+    "migration_identifier": "blueprint",
+    "publishes": ["blueprint.request.created", "blueprint.request.approved", "blueprint.request.rejected", "blueprint.request.fulfilled"],
+    "subscribes": [],
+    "capabilities": {
+        "provides": ["blueprint.getCharacterStats", "blueprint.getCorpSummary"],
+        "calls": []
+    },
+    "routes": { "serves": [], "uses": [] }
+}
